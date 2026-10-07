@@ -19,6 +19,7 @@ describe('AppComponent', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.brand')?.textContent).toContain('TaxPilot');
+    expect(compiled.querySelector('.brand-mark')?.textContent).toBe('T');
     expect(compiled.querySelector('h1')?.textContent).toContain('Tax compliance');
     expect(compiled.querySelector('#features')).toBeTruthy();
     expect(compiled.querySelector('#how-it-works')).toBeTruthy();
