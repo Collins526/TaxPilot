@@ -1,0 +1,407 @@
+@if (!isAuthenticated && showLanding) {
+  <main class="landing-page">
+    <header class="landing-header">
+      <a class="brand landing-brand" href="/" aria-label="TaxPilot home">
+        <span class="brand-mark">T</span>
+        <span>TaxPilot</span>
+      </a>
+      <nav class="landing-nav" aria-label="Main navigation">
+        <a href="#features">What you can do</a>
+        <a href="#how-it-works">How it works</a>
+      </nav>
+      <div class="landing-actions">
+        <button class="landing-signin" type="button" (click)="openAuth('login')">Sign in</button>
+        <button class="landing-cta landing-cta-small" type="button" (click)="openAuth('register')">
+          Get started <span aria-hidden="true">↗</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="landing-hero">
+      <div class="hero-copy">
+        <div class="hero-kicker"><span class="kenya-dot"></span> BUILT FOR KENYAN BUSINESSES</div>
+        <h1>Tax compliance,<br>with <span>less guesswork.</span></h1>
+        <p class="hero-description">
+          Know which obligations apply to your business, keep an eye on filing dates,
+          and bring your tax information into one clear workspace.
+        </p>
+        <div class="hero-actions">
+          <button class="landing-cta" type="button" (click)="openAuth('register')">
+            Create your account <span aria-hidden="true">→</span>
+          </button>
+          <button class="hero-login" type="button" (click)="openAuth('login')">I already have an account</button>
+        </div>
+        <div class="hero-points" aria-label="TaxPilot principles">
+          <span><b aria-hidden="true">✓</b> Your business, your view</span>
+          <span><b aria-hidden="true">✓</b> No made-up estimates</span>
+        </div>
+      </div>
+
+      <div class="hero-art" aria-label="Illustration of a TaxPilot business workspace">
+        <div class="art-orbit orbit-one"></div>
+        <div class="art-orbit orbit-two"></div>
+        <div class="workspace-card">
+          <div class="workspace-top">
+            <div class="workspace-brand"><span class="brand-mark">T</span><span>Example workspace</span></div>
+            <span class="workspace-live">ILLUSTRATIVE PREVIEW</span>
+          </div>
+          <div class="workspace-welcome">
+            <span>BUSINESS OVERVIEW</span>
+            <strong>Your tax, in context.</strong>
+          </div>
+          <div class="workspace-stats">
+            <div class="workspace-stat"><span>YOUR TAX PROFILE</span><strong>Business-led</strong><small>Details shape your obligations</small></div>
+            <div class="workspace-stat"><span>YOUR CALENDAR</span><strong>Personalized</strong><small>Dates based on active rules</small></div>
+          </div>
+          <div class="workspace-obligations">
+            <div class="workspace-obligations-head"><strong>Obligations overview</strong><span>Based on your profile</span></div>
+            <div class="obligation-preview"><span class="preview-icon preview-green">✓</span><span>PAYE</span><small>Profile-based</small></div>
+            <div class="obligation-preview"><span class="preview-icon preview-gold">✓</span><span>VAT</span><small>Profile-based</small></div>
+            <div class="obligation-preview"><span class="preview-icon preview-blue">•</span><span>Filing calendar</span><small>Rule-versioned</small></div>
+          </div>
+          <div class="workspace-foot"><span class="foot-shield">◇</span><span>Clear information. No invented tax figures.</span></div>
+        </div>
+        <div class="floating-note"><span class="note-icon">↗</span><span><strong>Stay in the know</strong><small>Keep deadlines in view</small></span></div>
+        <div class="art-sparkle sparkle-one">✳</div>
+        <div class="art-sparkle sparkle-two">✦</div>
+      </div>
+    </section>
+
+    <section class="trust-strip" aria-label="Product principles">
+      <span>MADE FOR KENYAN SMEs</span><i></i><span>PROFILE-DRIVEN OBLIGATIONS</span><i></i><span>DETERMINISTIC RULES</span><i></i><span>YOUR DATA STAYS YOURS</span>
+    </section>
+
+    <section class="landing-features" id="features">
+      <div class="section-intro">
+        <p class="landing-eyebrow">A clearer starting point</p>
+        <h2>Get the essentials<br>in one place.</h2>
+        <p>Spend less time piecing together your business tax picture. TaxPilot brings your profile, relevant obligations and calendar together.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <span class="feature-icon feature-icon-teal">◎</span>
+          <h3>Know what applies</h3>
+          <p>Build a business tax profile and see obligations based on the details you provide—not a one-size-fits-all checklist.</p>
+          <span class="feature-number">01 / BUSINESS PROFILE</span>
+        </article>
+        <article class="feature-card">
+          <span class="feature-icon feature-icon-gold">▦</span>
+          <h3>Keep dates in sight</h3>
+          <p>See a personalized calendar for obligations with configured due dates, using effective-dated schedule rules.</p>
+          <span class="feature-number">02 / TAX CALENDAR</span>
+        </article>
+        <article class="feature-card">
+          <span class="feature-icon feature-icon-blue">⌁</span>
+          <h3>Stay grounded in facts</h3>
+          <p>TaxPilot shows what is known and flags what is not configured. No invented tax estimates or unofficial KRA scores.</p>
+          <span class="feature-number">03 / CLEAR INFORMATION</span>
+        </article>
+      </div>
+    </section>
+
+    <section class="how-section" id="how-it-works">
+      <div class="how-copy">
+        <p class="landing-eyebrow">Simple by design</p>
+        <h2>Start with your business.<br>Build from there.</h2>
+        <p>Your obligations depend on your business. TaxPilot starts with the facts, then organizes the information around them.</p>
+        <button class="landing-cta" type="button" (click)="openAuth('register')">Set up your workspace <span aria-hidden="true">→</span></button>
+      </div>
+      <div class="steps-list">
+        <article class="step"><span>01</span><div><h3>Create your business profile</h3><p>Add your business details and tax-relevant information.</p></div></article>
+        <article class="step"><span>02</span><div><h3>Review applicable obligations</h3><p>See which obligations your saved profile indicates.</p></div></article>
+        <article class="step"><span>03</span><div><h3>Keep your calendar close</h3><p>Review configured deadlines and update your profile as things change.</p></div></article>
+      </div>
+    </section>
+
+    <footer class="landing-footer">
+      <a class="brand landing-brand" href="/" aria-label="TaxPilot home"><span class="brand-mark">T</span><span>TaxPilot</span></a>
+      <p>Designed for Kenyan businesses. TaxPilot is an informational tool, not a KRA service or substitute for professional tax advice.</p>
+      <span>© TaxPilot</span>
+    </footer>
+  </main>
+} @else if (!isAuthenticated) {
+  <main class="auth-shell">
+    <section class="auth-card">
+      <button class="brand auth-home" type="button" (click)="returnToLanding()" aria-label="Back to TaxPilot home">
+        <span class="brand-mark">T</span>
+        <span>TaxPilot</span>
+      </button>
+      <p class="eyebrow">Kenyan SME tax compliance</p>
+      <h1>{{ isLogin ? 'Welcome back' : 'Create your TaxPilot account' }}</h1>
+      <p class="muted">Keep your business tax profile, obligations and deadlines in one place.</p>
+
+      @if (errorMessage) {
+        <div class="alert error" role="alert">{{ errorMessage }}</div>
+      }
+
+      <form (submit)="submitAuth($event)">
+        @if (!isLogin) {
+          <div class="field-row">
+            <label>First name<input name="firstName" autocomplete="given-name" required></label>
+            <label>Last name<input name="lastName" autocomplete="family-name" required></label>
+          </div>
+          <label>Phone<input name="phone" type="tel" autocomplete="tel" placeholder="+254..." required></label>
+        }
+        <label>Email<input name="email" type="email" autocomplete="email" required></label>
+        <label>Password<input name="password" type="password" [attr.autocomplete]="isLogin ? 'current-password' : 'new-password'" minlength="8" required></label>
+        <button class="primary-btn full-width" type="submit" [disabled]="busy">
+          {{ busy ? 'Please wait…' : (isLogin ? 'Sign in' : 'Create account') }}
+        </button>
+      </form>
+
+      <p class="switch-copy">
+        {{ isLogin ? 'New to TaxPilot?' : 'Already have an account?' }}
+        <button class="text-btn" type="button" (click)="toggleAuthMode()">
+          {{ isLogin ? 'Create account' : 'Sign in' }}
+        </button>
+      </p>
+    </section>
+  </main>
+} @else {
+  <div class="page-shell">
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="TaxPilot dashboard">
+        <span class="brand-mark">T</span>
+        <span>TaxPilot</span>
+      </a>
+      <p class="sidebar-caption">BUSINESS TAX CONTROL</p>
+      @if (businesses.length > 0) {
+        <label class="business-picker">
+          <span>Active business</span>
+          <select [value]="selectedBusinessId" (change)="switchBusiness($event)">
+            @for (business of businesses; track business.id) {
+              <option [value]="business.id">{{ business.name }}</option>
+            }
+          </select>
+        </label>
+      }
+      <nav class="main-nav" aria-label="Main navigation">
+        <a class="nav-item active" href="#dashboard">Overview</a>
+        <a class="nav-item" href="#obligations">Tax obligations</a>
+        <a class="nav-item" href="#calendar">Deadline calendar</a>
+        <a class="nav-item" href="#tax-profile">Tax profile</a>
+      </nav>
+      <div class="profile-card">
+        <div class="profile-badge">{{ (userName || userEmail || 'TP').slice(0, 2).toUpperCase() }}</div>
+        <div class="profile-copy">
+          <strong>{{ userName || 'TaxPilot user' }}</strong>
+          <small>{{ userEmail }}</small>
+        </div>
+        <button class="signout-btn" type="button" (click)="signOut()" aria-label="Sign out">↗</button>
+      </div>
+    </aside>
+
+    <main class="dashboard" id="dashboard">
+      @if (errorMessage) {
+        <div class="alert error" role="alert">{{ errorMessage }}</div>
+      }
+      @if (successMessage) {
+        <div class="alert success" role="status">{{ successMessage }}</div>
+      }
+
+      @if (businesses.length === 0 || addingBusiness) {
+        <section class="welcome-panel">
+          <p class="eyebrow">{{ businesses.length === 0 ? 'Start with your business' : 'Add a business' }}</p>
+          <h1>{{ businesses.length === 0 ? 'Set up your business profile' : 'Create another business profile' }}</h1>
+          <p class="muted">We use these details to build your tax profile and show only applicable obligations.</p>
+          <form class="form-grid" (submit)="submitBusiness($event)">
+            <label>Business name<input name="name" required></label>
+            <label>Legal name<input name="legalName" required></label>
+            <label>Registration number<input name="registrationNumber" required></label>
+            <label>KRA PIN<input name="kraPin" required></label>
+            <label>Industry<input name="industry" required></label>
+            <label>Business type
+              <select name="businessType" required>
+                <option value="SOLE_PROPRIETOR">Sole proprietor</option>
+                <option value="PARTNERSHIP">Partnership</option>
+                <option value="LIMITED_COMPANY">Limited company</option>
+                <option value="LLP">Limited liability partnership</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </label>
+            <label>Annual turnover (KES)<input name="annualTurnover" type="number" min="0" step="0.01" value="0"></label>
+            <label>Employees<input name="employeeCount" type="number" min="0" step="1" value="0"></label>
+            <label class="check-field"><input name="vatRegistered" type="checkbox"> VAT registered</label>
+            <label class="check-field"><input name="etimsRegistered" type="checkbox"> eTIMS registered</label>
+            <button class="primary-btn" type="submit" [disabled]="busy">{{ busy ? 'Saving…' : 'Create business profile' }}</button>
+            @if (businesses.length > 0) {
+              <button class="secondary-btn" type="button" (click)="cancelAddingBusiness()">Cancel</button>
+            }
+          </form>
+        </section>
+      } @else {
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">TaxPilot dashboard · Kenya</p>
+            <h1>{{ dashboard?.businessName || selectedBusiness?.name || 'Business overview' }}</h1>
+            <p class="muted">A clear view of your recorded tax profile, obligations and upcoming deadlines.</p>
+          </div>
+          <div class="header-actions">
+            <button class="secondary-btn" type="button" (click)="addingBusiness = true">Add business</button>
+            <button class="secondary-btn" type="button" (click)="signOut()">Sign out</button>
+          </div>
+        </header>
+
+        @if (selectedBusiness) {
+          <details class="business-edit panel">
+            <summary>Edit business profile</summary>
+            <form class="form-grid" (submit)="saveBusiness($event)">
+              <label>Business name<input name="name" required [value]="selectedBusiness.name"></label>
+              <label>Legal name<input name="legalName" required [value]="selectedBusiness.legalName"></label>
+              <label>Registration number<input name="registrationNumber" required [value]="selectedBusiness.registrationNumber"></label>
+              <label>KRA PIN<input name="kraPin" required [value]="selectedBusiness.kraPin"></label>
+              <label>Industry<input name="industry" required [value]="selectedBusiness.industry"></label>
+              <label>Business type
+                <select name="businessType" [value]="selectedBusiness.businessType">
+                  <option value="SOLE_PROPRIETOR">Sole proprietor</option>
+                  <option value="PARTNERSHIP">Partnership</option>
+                  <option value="LIMITED_COMPANY">Limited company</option>
+                  <option value="LLP">Limited liability partnership</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </label>
+              <label>Annual turnover (KES)<input name="annualTurnover" type="number" min="0" step="0.01" [value]="selectedBusiness.annualTurnover"></label>
+              <label>Employees<input name="employeeCount" type="number" min="0" step="1" [value]="selectedBusiness.employeeCount"></label>
+              <label class="check-field"><input name="vatRegistered" type="checkbox" [checked]="selectedBusiness.vatRegistered"> VAT registered</label>
+              <label class="check-field"><input name="etimsRegistered" type="checkbox" [checked]="selectedBusiness.etimsRegistered"> eTIMS registered</label>
+              <button class="primary-btn" type="submit" [disabled]="busy">{{ busy ? 'Saving…' : 'Save business profile' }}</button>
+            </form>
+          </details>
+        }
+
+        @if (loadingDashboard) {
+          <div class="loading-panel" role="status">Loading your business tax data…</div>
+        } @else if (dashboard) {
+          <section class="summary-grid" aria-label="Tax summary">
+            <article class="metric-card score-card">
+              <span class="label">Tax Health</span>
+              <div class="metric-row"><strong>{{ dashboard.taxHealthScore }}</strong><span>/ 100</span></div>
+              <small>TaxPilot score · {{ dashboard.taxHealthStatus }}</small>
+              <p>Not an official KRA score</p>
+            </article>
+            <article class="metric-card">
+              <span class="label">Next deadline</span>
+              <strong class="metric-text">{{ dashboard.nextDeadlineLabel }}</strong>
+              <p>Based on your applicable obligations</p>
+            </article>
+            <article class="metric-card">
+              <span class="label">Estimated tax</span>
+              <strong class="metric-text">{{ formatMoney(dashboard.estimatedTax) }}</strong>
+              <p>Tax estimates are not enabled in this first phase</p>
+            </article>
+            <article class="metric-card warning-card">
+              <span class="label">Compliance issues</span>
+              <strong>{{ dashboard.issuesFound }}</strong>
+              <p>{{ dashboard.issuesFound === 1 ? 'Profile item to review' : 'Profile items to review' }}</p>
+            </article>
+          </section>
+
+          <section class="panel-grid">
+            <article class="panel" id="obligations">
+              <div class="panel-header">
+                <div><p class="eyebrow">Based on your tax profile</p><h2>Applicable tax obligations</h2></div>
+                <span class="chip neutral">{{ obligations.length }} active</span>
+              </div>
+              @if (obligations.length > 0) {
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Tax</th><th>Frequency</th><th>Next due</th><th>Rule version</th><th>Estimate</th></tr></thead>
+                    <tbody>
+                      @for (obligation of obligations; track obligation.taxType) {
+                        <tr>
+                          <td><strong>{{ obligation.taxType }}</strong><small class="table-detail">{{ obligation.reason }}</small></td>
+                          <td>{{ obligation.frequency.replace('_', ' ') }}</td>
+                          <td>{{ formatDate(obligation.nextDueDate) }}</td>
+                          <td>{{ obligation.ruleVersion || 'Not configured' }}</td>
+                          <td>{{ formatMoney(obligation.estimatedAmount) }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else {
+                <p class="empty-state">No tax obligations are currently indicated by this business profile. Confirm the profile is complete.</p>
+              }
+            </article>
+
+            <article class="panel" id="calendar">
+              <div class="panel-header">
+                <div><p class="eyebrow">Personalized calendar</p><h2>Upcoming deadlines</h2></div>
+                <span class="chip success">{{ dashboard.upcomingDeadlines.length }} scheduled</span>
+              </div>
+              @if (dashboard.upcomingDeadlines.length > 0) {
+                <ul class="deadline-list">
+                  @for (entry of dashboard.upcomingDeadlines; track entry.taxType) {
+                    <li>
+                      <span class="deadline-icon">▣</span>
+                      <span class="deadline-copy"><strong>{{ entry.taxType }}</strong><small>{{ formatDate(entry.dueDate) }} · {{ entry.daysRemaining }} days remaining</small></span>
+                      <span class="status" [class]="statusClass(entry)">{{ entry.status.replace('_', ' ') }}</span>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="empty-state">No fixed due dates are configured for the applicable obligations in the active rules.</p>
+              }
+            </article>
+          </section>
+
+          <section class="panel-grid lower-grid">
+            <article class="panel issue-panel">
+              <div class="panel-header">
+                <div><p class="eyebrow">Business data checks</p><h2>Compliance issues</h2></div>
+                <span class="chip" [class.success]="dashboard.issuesFound === 0" [class.warning]="dashboard.issuesFound > 0">
+                  {{ dashboard.issuesFound }} found
+                </span>
+              </div>
+              @if (dashboard.complianceIssues.length > 0) {
+                <ul class="issue-list">
+                  @for (issue of dashboard.complianceIssues; track issue) { <li>{{ issue }}</li> }
+                </ul>
+              } @else {
+                <p class="empty-state">No inconsistencies detected in the profile fields available in this phase.</p>
+              }
+            </article>
+            <article class="panel pre-kra-panel">
+              <p class="eyebrow">Pre-KRA Check</p>
+              <h2>Not run yet</h2>
+              <p class="muted">Sales, VAT, withholding and eTIMS record comparisons are outside this first implementation slice. No check results are being inferred.</p>
+            </article>
+          </section>
+
+          <section class="panel profile-panel" id="tax-profile">
+            <div class="panel-header">
+              <div><p class="eyebrow">Business facts drive obligations</p><h2>Tax profile</h2></div>
+              <span class="chip neutral">{{ profile?.businessType }}</span>
+            </div>
+            @if (profile) {
+              <form class="profile-form" (submit)="saveTaxProfile($event)">
+                <div class="profile-numbers">
+                  <label>Annual turnover (KES)<input name="annualTurnover" type="number" min="0" step="0.01" [value]="profile.annualTurnover"></label>
+                  <label>Monthly turnover (KES)<input name="monthlyTurnover" type="number" min="0" step="0.01" [value]="profile.monthlyTurnover"></label>
+                  <label>Employee count<input name="employeeCount" type="number" min="0" step="1" [value]="profile.employeeCount"></label>
+                  <label>VAT registration date<input name="vatRegistrationDate" type="date" [value]="profile.vatRegistrationDate || ''"></label>
+                </div>
+                <div class="check-grid">
+                  <label class="check-field"><input name="vatRegistered" type="checkbox" [checked]="profile.vatRegistered"> VAT registered</label>
+                  <label class="check-field"><input name="etimsRegistered" type="checkbox" [checked]="profile.etimsRegistered"> eTIMS registered</label>
+                  <label class="check-field"><input name="hasEmployees" type="checkbox" [checked]="profile.hasEmployees"> Has employees</label>
+                  <label class="check-field"><input name="makesWithholdingPayments" type="checkbox" [checked]="profile.makesWithholdingPayments"> Makes withholding payments</label>
+                  <label class="check-field"><input name="receivesRentalIncome" type="checkbox" [checked]="profile.receivesRentalIncome"> Receives rental income</label>
+                  <label class="check-field"><input name="importsGoods" type="checkbox" [checked]="profile.importsGoods"> Imports goods</label>
+                  <label class="check-field"><input name="exportsGoods" type="checkbox" [checked]="profile.exportsGoods"> Exports goods</label>
+                  <label class="check-field"><input name="hasForeignTransactions" type="checkbox" [checked]="profile.hasForeignTransactions"> Foreign transactions</label>
+                  <label class="check-field"><input name="hasDigitalServices" type="checkbox" [checked]="profile.hasDigitalServices"> Digital services</label>
+                  <label class="check-field"><input name="hasExciseActivities" type="checkbox" [checked]="profile.hasExciseActivities"> Excise activities</label>
+                  <label class="check-field"><input name="incomeTaxApplicable" type="checkbox" [checked]="profile.incomeTaxApplicable"> Income tax applies</label>
+                  <label class="check-field"><input name="corporationTaxApplicable" type="checkbox" [checked]="profile.corporationTaxApplicable"> Corporation tax applies</label>
+                  <label class="check-field"><input name="turnoverTaxApplicable" type="checkbox" [checked]="profile.turnoverTaxApplicable"> Turnover tax applies</label>
+                </div>
+                <button class="primary-btn" type="submit" [disabled]="busy">{{ busy ? 'Saving…' : 'Save tax profile' }}</button>
+              </form>
+            }
+          </section>
+        }
+      }
+    </main>
+  </div>
+}

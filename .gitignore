@@ -1,0 +1,22 @@
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# Java / Maven
+backend/target/
+backend/.classpath
+backend/.project
+backend/.settings/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
