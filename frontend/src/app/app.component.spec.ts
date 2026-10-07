@@ -23,6 +23,11 @@ describe('AppComponent', () => {
     expect(compiled.querySelector('h1')?.textContent).toContain('Tax compliance');
     expect(compiled.querySelector('#features')).toBeTruthy();
     expect(compiled.querySelector('#how-it-works')).toBeTruthy();
+    const footer = compiled.querySelector('.landing-footer');
+    expect(footer?.textContent).toContain('Dashboard');
+    expect(footer?.textContent).toContain('Pre-KRA Check');
+    expect(footer?.textContent).toContain('© 2026 TaxPilot. All rights reserved.');
+    expect(footer?.textContent).toContain('It is not a KRA service');
     expect(compiled.querySelector('input[name="email"]')).toBeFalsy();
   });
 

@@ -114,9 +114,35 @@
     </section>
 
     <footer class="landing-footer">
-      <a class="brand landing-brand" href="/" aria-label="TaxPilot home"><span class="brand-mark">T</span><span>TaxPilot</span></a>
-      <p>Designed for Kenyan businesses. TaxPilot is an informational tool, not a KRA service or substitute for professional tax advice.</p>
-      <span>© TaxPilot</span>
+      <div class="footer-main">
+        <div class="footer-about">
+          <a class="brand landing-brand" href="/" aria-label="TaxPilot home"><span class="brand-mark">T</span><span>TaxPilot</span></a>
+          <p>Smarter tax compliance<br>for Kenyan businesses.</p>
+        </div>
+        <nav class="footer-column" aria-label="Product">
+          <h2>Product</h2>
+          <button type="button" (click)="openAuth('login')">Dashboard</button>
+          <button type="button" (click)="openAuth('login')">Tax Health</button>
+          <span>Pre-KRA Check</span>
+        </nav>
+        <nav class="footer-column" aria-label="Resources">
+          <h2>Resources</h2>
+          <span>Help Center</span>
+          <span>Tax Guide</span>
+          <span>FAQs</span>
+        </nav>
+        <nav class="footer-column" aria-label="Company">
+          <h2>Company</h2>
+          <span>About Us</span>
+          <span>Contact</span>
+          <span>Privacy</span>
+        </nav>
+      </div>
+      <div class="footer-legal">
+        <span>© 2026 TaxPilot. All rights reserved.</span>
+        <p>TaxPilot is an independent informational and compliance-assistance tool.<br>
+          It is not a KRA service and does not replace professional tax advice.</p>
+      </div>
     </footer>
   </main>
 } @else if (!isAuthenticated) {
