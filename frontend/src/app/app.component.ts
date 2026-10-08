@@ -18,7 +18,7 @@ import {
 export class AppComponent {
   showLanding = true;
   isLogin = true;
-  activePage: 'overview' | 'obligations' | 'profile' = 'overview';
+  activePage: 'overview' | 'obligations' | 'profile' | 'deadline' = 'overview';
   addingBusiness = false;
   busy = false;
   loadingDashboard = false;
@@ -31,6 +31,7 @@ export class AppComponent {
   dashboard: DashboardSummary | null = null;
   obligations: TaxObligation[] = [];
   profile: TaxProfile | null = null;
+  selectedDeadline: TaxCalendarEntry | null = null;
 
   constructor(private readonly api: TaxPilotApiService) {
     if (this.api.hasSession) {
@@ -52,6 +53,25 @@ export class AppComponent {
   openPage(page: 'overview' | 'obligations' | 'profile'): void {
     this.activePage = page;
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  openDeadline(entry: TaxCalendarEntry): void {
+    this.selectedDeadline = entry;
+    this.activePage = 'deadline';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  get selectedDeadlineObligation(): TaxObligation | undefined {
+    return this.obligations.find((obligation) => obligation.taxType === this.selectedDeadline?.taxType);
+  }
+
+  get selectedDeadlineAmount(): number | null {
+    return this.selectedDeadline?.amount ?? this.selectedDeadlineObligation?.estimatedAmount ?? null;
+  }
+
+  returnToOverview(): void {
+    this.selectedDeadline = null;
+    this.openPage('overview');
   }
 
   openOverviewSection(sectionId: 'calendar'): void {
@@ -228,6 +248,10 @@ export class AppComponent {
 
   async switchBusiness(event: Event): Promise<void> {
     this.selectedBusinessId = (event.currentTarget as HTMLSelectElement).value;
+    this.selectedDeadline = null;
+    if (this.activePage === 'deadline') {
+      this.activePage = 'overview';
+    }
     await this.loadSelectedBusiness();
   }
 
@@ -239,6 +263,7 @@ export class AppComponent {
     this.dashboard = null;
     this.obligations = [];
     this.profile = null;
+    this.selectedDeadline = null;
     this.userName = '';
     this.userEmail = '';
     this.errorMessage = '';

@@ -259,8 +259,8 @@
         <header class="topbar">
           <div>
             <p class="eyebrow">{{ activePage === 'overview' ? 'TaxPilot dashboard · Kenya' : 'Business details · Kenya' }}</p>
-            <h1>{{ activePage === 'profile' ? 'Tax profile' : (activePage === 'obligations' ? 'Tax obligations' : (dashboard?.businessName || selectedBusiness?.name || 'Business overview')) }}</h1>
-            <p class="muted">{{ activePage === 'profile' ? 'Review and update the details used to determine your tax obligations.' : (activePage === 'obligations' ? 'Review the taxes indicated by your saved business profile, including filing frequency and due dates.' : 'A clear view of your recorded tax profile, obligations and upcoming deadlines.') }}</p>
+            <h1>{{ activePage === 'profile' ? 'Tax profile' : (activePage === 'obligations' ? 'Tax obligations' : (activePage === 'deadline' ? (selectedDeadline?.taxType || 'Deadline details') : (dashboard?.businessName || selectedBusiness?.name || 'Business overview'))) }}</h1>
+            <p class="muted">{{ activePage === 'profile' ? 'Review and update the details used to determine your tax obligations.' : (activePage === 'obligations' ? 'Review the taxes indicated by your saved business profile, including filing frequency and due dates.' : (activePage === 'deadline' ? 'Review the amount, due date, and filing details for this obligation.' : 'A clear view of your recorded tax profile, obligations and upcoming deadlines.')) }}</p>
           </div>
           <div class="header-actions">
             <button class="secondary-btn" type="button" (click)="addingBusiness = true">Add business</button>
@@ -335,9 +335,11 @@
                 <ul class="deadline-list">
                   @for (entry of dashboard.upcomingDeadlines; track entry.taxType) {
                     <li>
-                      <span class="deadline-icon">▣</span>
-                      <span class="deadline-copy"><strong>{{ entry.taxType }}</strong><small>{{ formatDate(entry.dueDate) }} · {{ entry.daysRemaining }} days remaining</small></span>
-                      <span class="status" [class]="statusClass(entry)">{{ entry.status.replace('_', ' ') }}</span>
+                      <button class="deadline-open" type="button" (click)="openDeadline(entry)" [attr.aria-label]="'View ' + entry.taxType + ' payment details, due ' + formatDate(entry.dueDate)">
+                        <span class="deadline-icon">▣</span>
+                        <span class="deadline-copy"><strong>{{ entry.taxType }}</strong><small>{{ formatDate(entry.dueDate) }} · {{ entry.daysRemaining }} days remaining</small></span>
+                        <span class="status" [class]="statusClass(entry)">{{ entry.status.replace('_', ' ') }}</span>
+                      </button>
                     </li>
                   }
                 </ul>
@@ -369,6 +371,32 @@
             </article>
           </section>
         }
+        } @else if (activePage === 'deadline' && selectedDeadline) {
+          <section class="panel deadline-detail-page">
+            <button class="secondary-btn" type="button" (click)="returnToOverview()">← Back to overview</button>
+            <div class="panel-header">
+              <div><p class="eyebrow">Payment and filing details</p><h2>{{ selectedDeadline.taxType }}</h2></div>
+              <span class="status" [class]="statusClass(selectedDeadline)">{{ selectedDeadline.status.replace('_', ' ') }}</span>
+            </div>
+            <div class="deadline-facts">
+              <div class="deadline-amount">
+                <span class="label">Estimated amount to pay</span>
+                <strong>{{ formatMoney(selectedDeadlineAmount) }}</strong>
+                @if (selectedDeadlineAmount === null) {
+                  <p>Tax estimates are not enabled yet, so no amount is available. Do not treat this as a payment instruction.</p>
+                } @else {
+                  <p>This is an estimate, not a final assessment or payment instruction. Verify the amount before paying.</p>
+                }
+              </div>
+              <dl class="deadline-metadata">
+                <div><dt>Due date</dt><dd>{{ formatDate(selectedDeadline.dueDate) }}</dd></div>
+                <div><dt>Time remaining</dt><dd>{{ selectedDeadline.daysRemaining }} days</dd></div>
+                <div><dt>Filing frequency</dt><dd>{{ selectedDeadlineObligation?.frequency?.replace('_', ' ') || 'Not configured' }}</dd></div>
+                <div><dt>Rule version</dt><dd>{{ selectedDeadlineObligation?.ruleVersion || 'Not configured' }}</dd></div>
+                <div><dt>Applicability</dt><dd>{{ selectedDeadlineObligation?.reason || 'Based on the active tax rules for this business.' }}</dd></div>
+              </dl>
+            </div>
+          </section>
         } @else if (activePage === 'obligations') {
           @if (loadingDashboard) {
             <div class="loading-panel" role="status">Loading your business tax data…</div>
