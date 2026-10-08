@@ -18,6 +18,7 @@ import {
 export class AppComponent {
   showLanding = true;
   isLogin = true;
+  activePage: 'overview' | 'obligations' | 'profile' = 'overview';
   addingBusiness = false;
   busy = false;
   loadingDashboard = false;
@@ -46,6 +47,18 @@ export class AppComponent {
 
   get selectedBusiness(): Business | undefined {
     return this.businesses.find((business) => business.id === this.selectedBusinessId);
+  }
+
+  openPage(page: 'overview' | 'obligations' | 'profile'): void {
+    this.activePage = page;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  openOverviewSection(sectionId: 'calendar'): void {
+    this.activePage = 'overview';
+    window.setTimeout(() => {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 
   openAuth(mode: 'login' | 'register'): void {
@@ -220,6 +233,7 @@ export class AppComponent {
 
   signOut(): void {
     this.api.clearSession();
+    this.activePage = 'overview';
     this.businesses = [];
     this.selectedBusinessId = '';
     this.dashboard = null;

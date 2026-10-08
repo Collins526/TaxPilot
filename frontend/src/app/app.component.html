@@ -202,10 +202,10 @@
         </label>
       }
       <nav class="main-nav" aria-label="Main navigation">
-        <a class="nav-item active" href="#dashboard">Overview</a>
-        <a class="nav-item" href="#obligations">Tax obligations</a>
-        <a class="nav-item" href="#calendar">Deadline calendar</a>
-        <a class="nav-item" href="#tax-profile">Tax profile</a>
+        <a class="nav-item" [class.active]="activePage === 'overview'" [attr.aria-current]="activePage === 'overview' ? 'page' : null" href="#dashboard" (click)="openPage('overview')">Overview</a>
+        <a class="nav-item" [class.active]="activePage === 'obligations'" [attr.aria-current]="activePage === 'obligations' ? 'page' : null" href="#obligations" (click)="openPage('obligations'); $event.preventDefault()">Tax obligations</a>
+        <a class="nav-item" href="#calendar" (click)="openOverviewSection('calendar'); $event.preventDefault()">Deadline calendar</a>
+        <a class="nav-item" [class.active]="activePage === 'profile'" [attr.aria-current]="activePage === 'profile' ? 'page' : null" href="#tax-profile" (click)="openPage('profile'); $event.preventDefault()">Tax profile</a>
       </nav>
       <div class="profile-card">
         <div class="profile-badge">{{ (userName || userEmail || 'TP').slice(0, 2).toUpperCase() }}</div>
@@ -258,9 +258,9 @@
       } @else {
         <header class="topbar">
           <div>
-            <p class="eyebrow">TaxPilot dashboard · Kenya</p>
-            <h1>{{ dashboard?.businessName || selectedBusiness?.name || 'Business overview' }}</h1>
-            <p class="muted">A clear view of your recorded tax profile, obligations and upcoming deadlines.</p>
+            <p class="eyebrow">{{ activePage === 'overview' ? 'TaxPilot dashboard · Kenya' : 'Business details · Kenya' }}</p>
+            <h1>{{ activePage === 'profile' ? 'Tax profile' : (activePage === 'obligations' ? 'Tax obligations' : (dashboard?.businessName || selectedBusiness?.name || 'Business overview')) }}</h1>
+            <p class="muted">{{ activePage === 'profile' ? 'Review and update the details used to determine your tax obligations.' : (activePage === 'obligations' ? 'Review the taxes indicated by your saved business profile, including filing frequency and due dates.' : 'A clear view of your recorded tax profile, obligations and upcoming deadlines.') }}</p>
           </div>
           <div class="header-actions">
             <button class="secondary-btn" type="button" (click)="addingBusiness = true">Add business</button>
@@ -268,33 +268,7 @@
           </div>
         </header>
 
-        @if (selectedBusiness) {
-          <details class="business-edit panel">
-            <summary>Edit business profile</summary>
-            <form class="form-grid" (submit)="saveBusiness($event)">
-              <label>Business name<input name="name" required [value]="selectedBusiness.name"></label>
-              <label>Legal name<input name="legalName" required [value]="selectedBusiness.legalName"></label>
-              <label>Registration number<input name="registrationNumber" required [value]="selectedBusiness.registrationNumber"></label>
-              <label>KRA PIN<input name="kraPin" required [value]="selectedBusiness.kraPin"></label>
-              <label>Industry<input name="industry" required [value]="selectedBusiness.industry"></label>
-              <label>Business type
-                <select name="businessType" [value]="selectedBusiness.businessType">
-                  <option value="SOLE_PROPRIETOR">Sole proprietor</option>
-                  <option value="PARTNERSHIP">Partnership</option>
-                  <option value="LIMITED_COMPANY">Limited company</option>
-                  <option value="LLP">Limited liability partnership</option>
-                  <option value="OTHER">Other</option>
-                </select>
-              </label>
-              <label>Annual turnover (KES)<input name="annualTurnover" type="number" min="0" step="0.01" [value]="selectedBusiness.annualTurnover"></label>
-              <label>Employees<input name="employeeCount" type="number" min="0" step="1" [value]="selectedBusiness.employeeCount"></label>
-              <label class="check-field"><input name="vatRegistered" type="checkbox" [checked]="selectedBusiness.vatRegistered"> VAT registered</label>
-              <label class="check-field"><input name="etimsRegistered" type="checkbox" [checked]="selectedBusiness.etimsRegistered"> eTIMS registered</label>
-              <button class="primary-btn" type="submit" [disabled]="busy">{{ busy ? 'Saving…' : 'Save business profile' }}</button>
-            </form>
-          </details>
-        }
-
+        @if (activePage === 'overview') {
         @if (loadingDashboard) {
           <div class="loading-panel" role="status">Loading your business tax data…</div>
         } @else if (dashboard) {
@@ -343,6 +317,7 @@
               </div>
             </details>
             <a class="metric-card warning-card metric-card-link" href="#tax-profile"
+               (click)="openPage('profile'); $event.preventDefault()"
                [attr.aria-label]="'Review tax profile: ' + dashboard.issuesFound + (dashboard.issuesFound === 1 ? ' compliance issue' : ' compliance issues')">
               <span class="label">Compliance issues</span>
               <strong>{{ dashboard.issuesFound }}</strong>
@@ -351,35 +326,7 @@
             </a>
           </section>
 
-          <section class="panel-grid">
-            <article class="panel" id="obligations">
-              <div class="panel-header">
-                <div><p class="eyebrow">Based on your tax profile</p><h2>Applicable tax obligations</h2></div>
-                <span class="chip neutral">{{ obligations.length }} active</span>
-              </div>
-              @if (obligations.length > 0) {
-                <div class="table-wrap">
-                  <table>
-                    <thead><tr><th>Tax</th><th>Frequency</th><th>Next due</th><th>Rule version</th><th>Estimate</th></tr></thead>
-                    <tbody>
-                      @for (obligation of obligations; track obligation.taxType) {
-                        <tr>
-                          <td><strong>{{ obligation.taxType }}</strong><small class="table-detail">{{ obligation.reason }}</small></td>
-                          <td>{{ obligation.frequency.replace('_', ' ') }}</td>
-                          <td>{{ formatDate(obligation.nextDueDate) }}</td>
-                          <td>{{ obligation.ruleVersion || 'Not configured' }}</td>
-                          <td>{{ formatMoney(obligation.estimatedAmount) }}</td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              } @else {
-                <p class="empty-state">No tax obligations are currently indicated by this business profile. Confirm the profile is complete.</p>
-              }
-            </article>
-
-            <article class="panel" id="calendar">
+          <section class="panel" id="calendar">
               <div class="panel-header">
                 <div><p class="eyebrow">Personalized calendar</p><h2>Upcoming deadlines</h2></div>
                 <span class="chip success">{{ dashboard.upcomingDeadlines.length }} scheduled</span>
@@ -397,7 +344,6 @@
               } @else {
                 <p class="empty-state">No fixed due dates are configured for the applicable obligations in the active rules.</p>
               }
-            </article>
           </section>
 
           <section class="panel-grid lower-grid">
@@ -422,11 +368,72 @@
               <p class="muted">Sales, VAT, withholding and eTIMS record comparisons are outside this first implementation slice. No check results are being inferred.</p>
             </article>
           </section>
-
+        }
+        } @else if (activePage === 'obligations') {
+          @if (loadingDashboard) {
+            <div class="loading-panel" role="status">Loading your business tax data…</div>
+          } @else {
+            <section class="panel" id="obligations">
+              <div class="panel-header">
+                <div><p class="eyebrow">Based on your saved tax profile</p><h2>Applicable tax obligations</h2></div>
+                <span class="chip neutral">{{ obligations.length }} active</span>
+              </div>
+              @if (obligations.length > 0) {
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Tax</th><th>Frequency</th><th>Next due</th><th>Rule version</th><th>Estimate</th></tr></thead>
+                    <tbody>
+                      @for (obligation of obligations; track obligation.taxType) {
+                        <tr>
+                          <td><strong>{{ obligation.taxType }}</strong><small class="table-detail">{{ obligation.reason }}</small></td>
+                          <td>{{ obligation.frequency.replace('_', ' ') }}</td>
+                          <td>{{ formatDate(obligation.nextDueDate) }}</td>
+                          <td>{{ obligation.ruleVersion || 'Not configured' }}</td>
+                          <td>{{ formatMoney(obligation.estimatedAmount) }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else {
+                <p class="empty-state">No tax obligations are currently indicated by this business profile. Confirm the profile is complete.</p>
+              }
+            </section>
+          }
+        } @else {
+          @if (selectedBusiness) {
+            <details class="business-edit panel">
+              <summary>Edit business profile</summary>
+              <form class="form-grid" (submit)="saveBusiness($event)">
+                <label>Business name<input name="name" required [value]="selectedBusiness.name"></label>
+                <label>Legal name<input name="legalName" required [value]="selectedBusiness.legalName"></label>
+                <label>Registration number<input name="registrationNumber" required [value]="selectedBusiness.registrationNumber"></label>
+                <label>KRA PIN<input name="kraPin" required [value]="selectedBusiness.kraPin"></label>
+                <label>Industry<input name="industry" required [value]="selectedBusiness.industry"></label>
+                <label>Business type
+                  <select name="businessType" [value]="selectedBusiness.businessType">
+                    <option value="SOLE_PROPRIETOR">Sole proprietor</option>
+                    <option value="PARTNERSHIP">Partnership</option>
+                    <option value="LIMITED_COMPANY">Limited company</option>
+                    <option value="LLP">Limited liability partnership</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                </label>
+                <label>Annual turnover (KES)<input name="annualTurnover" type="number" min="0" step="0.01" [value]="selectedBusiness.annualTurnover"></label>
+                <label>Employees<input name="employeeCount" type="number" min="0" step="1" [value]="selectedBusiness.employeeCount"></label>
+                <label class="check-field"><input name="vatRegistered" type="checkbox" [checked]="selectedBusiness.vatRegistered"> VAT registered</label>
+                <label class="check-field"><input name="etimsRegistered" type="checkbox" [checked]="selectedBusiness.etimsRegistered"> eTIMS registered</label>
+                <button class="primary-btn" type="submit" [disabled]="busy">{{ busy ? 'Saving…' : 'Save business profile' }}</button>
+              </form>
+            </details>
+          }
+          @if (loadingDashboard) {
+            <div class="loading-panel" role="status">Loading your business tax data…</div>
+          } @else if (profile) {
           <section class="panel profile-panel" id="tax-profile">
             <div class="panel-header">
               <div><p class="eyebrow">Business facts drive obligations</p><h2>Tax profile</h2></div>
-              <span class="chip neutral">{{ profile?.businessType }}</span>
+              <span class="chip neutral">{{ profile.businessType }}</span>
             </div>
             @if (profile) {
               <form class="profile-form" (submit)="saveTaxProfile($event)">
@@ -455,6 +462,9 @@
               </form>
             }
           </section>
+          } @else {
+            <section class="panel"><p class="empty-state">Select or create a business to view its tax profile.</p></section>
+          }
         }
       }
     </main>
