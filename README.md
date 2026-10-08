@@ -17,7 +17,7 @@ The first end-to-end slice covers registration/login, business onboarding, a bus
 
 ## Quick start
 
-1. Copy `.env.example` to `.env` and set private database and JWT credentials. For Supabase, use the project host, database, username, password and `DB_SSLMODE=require`. `.env` is git-ignored.
+1. Copy `.env.example` to `.env` and set private database and JWT credentials. For Supabase, use the project host, database, username, password and `DB_SSLMODE=require`. Set `CORS_ALLOWED_ORIGINS` to the frontend's origin (comma-separated if there are multiple). `.env` is git-ignored.
 2. Start the stack:
    ```bash
    docker compose up --build
@@ -30,7 +30,8 @@ The first end-to-end slice covers registration/login, business onboarding, a bus
 - Backend:
   ```bash
   cd backend
-  # Set JWT_SECRET to a private value of at least 32 characters before starting.
+  # Set DB_HOST=localhost when connecting to a local PostgreSQL server.
+  # The backend loads the repository-level .env; set JWT_SECRET there as well.
   mvn spring-boot:run
   ```
 

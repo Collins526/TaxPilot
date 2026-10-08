@@ -252,7 +252,7 @@ button:disabled {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
   gap: 15px;
   margin-bottom: 18px;
 }
@@ -269,7 +269,18 @@ button:disabled {
 
 .metric-card {
   min-width: 0;
+  padding: 0;
+}
+
+.metric-card-link {
   padding: 19px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.metric-card > summary {
+  padding: 19px;
+  cursor: pointer;
 }
 
 .metric-card .label {
@@ -292,10 +303,10 @@ button:disabled {
   min-height: 2.4em;
   font-size: clamp(1.08rem, 1.5vw, 1.4rem);
   letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
 }
 
-.metric-card p,
-.metric-card small {
+.metric-card .metric-support {
   display: block;
   margin: 7px 0 0;
   color: #687c87;
@@ -320,13 +331,41 @@ button:disabled {
 }
 
 .score-card .label,
-.score-card small,
-.score-card p {
+.score-card .metric-support {
   color: #c4e5df;
 }
 
 .warning-card {
   background: linear-gradient(145deg, #fffaf0, #fff);
+}
+
+.metric-detail {
+  padding: 14px 19px 18px;
+  border-top: 1px solid #e0e8e9;
+  color: #526b75;
+  font-size: 0.79rem;
+  line-height: 1.5;
+}
+
+.score-card .metric-detail {
+  color: #e3f3f0;
+}
+
+.metric-detail-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.metric-detail-list li span {
+  display: block;
+  color: #758791;
+}
+
+.score-card .metric-detail-list li span {
+  color: #c4e5df;
 }
 
 .panel-grid {
@@ -1425,10 +1464,6 @@ select:focus {
     gap: 42px;
   }
 
-  .summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .panel-grid {
     grid-template-columns: 1fr;
   }
@@ -1675,7 +1710,6 @@ select:focus {
     display: none;
   }
 
-  .summary-grid,
   .check-grid {
     grid-template-columns: 1fr;
   }

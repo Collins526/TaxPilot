@@ -299,27 +299,56 @@
           <div class="loading-panel" role="status">Loading your business tax data…</div>
         } @else if (dashboard) {
           <section class="summary-grid" aria-label="Tax summary">
-            <article class="metric-card score-card">
-              <span class="label">Tax Health</span>
-              <div class="metric-row"><strong>{{ dashboard.taxHealthScore }}</strong><span>/ 100</span></div>
-              <small>TaxPilot score · {{ dashboard.taxHealthStatus }}</small>
-              <p>Not an official KRA score</p>
-            </article>
-            <article class="metric-card">
-              <span class="label">Next deadline</span>
-              <strong class="metric-text">{{ dashboard.nextDeadlineLabel }}</strong>
-              <p>Based on your applicable obligations</p>
-            </article>
-            <article class="metric-card">
-              <span class="label">Estimated tax</span>
-              <strong class="metric-text">{{ formatMoney(dashboard.estimatedTax) }}</strong>
-              <p>Tax estimates are not enabled in this first phase</p>
-            </article>
-            <article class="metric-card warning-card">
+            <details class="metric-card score-card">
+              <summary>
+                <span class="label">Tax Health</span>
+                <span class="metric-row"><strong>{{ dashboard.taxHealthScore }}</strong><span>/ 100</span></span>
+                <span class="metric-support">TaxPilot score · {{ dashboard.taxHealthStatus }}</span>
+                <span class="metric-support">Not an official KRA score</span>
+              </summary>
+              <div class="metric-detail">
+                This is a TaxPilot indicator based on the checks currently available for this business profile. It is not an official KRA score or a verified compliance assessment.
+              </div>
+            </details>
+            <details class="metric-card">
+              <summary>
+                <span class="label">Next deadline</span>
+                <strong class="metric-text">{{ dashboard.nextDeadlineLabel }}</strong>
+                <span class="metric-support">Based on your applicable obligations</span>
+              </summary>
+              <div class="metric-detail">
+                @if (dashboard.upcomingDeadlines.length > 0) {
+                  <ul class="metric-detail-list">
+                    @for (entry of dashboard.upcomingDeadlines; track entry.taxType) {
+                      <li><strong>{{ entry.taxType }}</strong><span>{{ formatDate(entry.dueDate) }} · {{ entry.daysRemaining }} days remaining</span></li>
+                    }
+                  </ul>
+                } @else {
+                  No fixed due dates are configured for the applicable obligations in the active rules.
+                }
+              </div>
+            </details>
+            <details class="metric-card">
+              <summary>
+                <span class="label">Estimated tax</span>
+                <strong class="metric-text">{{ formatMoney(dashboard.estimatedTax) }}</strong>
+                <span class="metric-support">Tax estimates are not enabled in this first phase</span>
+              </summary>
+              <div class="metric-detail">
+                @if (dashboard.estimatedTax === null) {
+                  No estimate is available because tax calculation is not enabled in this phase. No amount is inferred.
+                } @else {
+                  This amount reflects the estimates currently available for applicable obligations. Confirm figures with a qualified tax professional before relying on them.
+                }
+              </div>
+            </details>
+            <a class="metric-card warning-card metric-card-link" href="#tax-profile"
+               [attr.aria-label]="'Review tax profile: ' + dashboard.issuesFound + (dashboard.issuesFound === 1 ? ' compliance issue' : ' compliance issues')">
               <span class="label">Compliance issues</span>
               <strong>{{ dashboard.issuesFound }}</strong>
-              <p>{{ dashboard.issuesFound === 1 ? 'Profile item to review' : 'Profile items to review' }}</p>
-            </article>
+              <span class="metric-support">{{ dashboard.issuesFound === 1 ? 'Profile item to review' : 'Profile items to review' }}</span>
+              <span class="metric-support">Review tax profile →</span>
+            </a>
           </section>
 
           <section class="panel-grid">

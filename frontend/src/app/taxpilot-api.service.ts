@@ -157,11 +157,12 @@ export class TaxPilotApiService {
     options: { method?: string; body?: object } = {}
   ): Promise<T> {
     const token = localStorage.getItem(this.tokenKey);
+    const isAuthRequest = path.startsWith('/api/auth/');
     const headers: Record<string, string> = {};
     if (options.body) {
       headers['Content-Type'] = 'application/json';
     }
-    if (token) {
+    if (token && !isAuthRequest) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
@@ -175,8 +176,15 @@ export class TaxPilotApiService {
       if (response.status === 401) {
         this.clearSession();
       }
-      const errorBody = await response.json().catch(() => null) as { message?: string } | null;
-      throw new Error(errorBody?.message ?? `Request failed (${response.status})`);
+      const responseBody = await response.text();
+      let errorMessage: string | undefined;
+      try {
+        const errorBody = JSON.parse(responseBody) as { message?: string };
+        errorMessage = errorBody.message;
+      } catch {
+        errorMessage = responseBody.trim().slice(0, 300) || undefined;
+      }
+      throw new Error(errorMessage ?? `Request failed (${response.status})`);
     }
     if (response.status === 204) {
       return undefined as T;
