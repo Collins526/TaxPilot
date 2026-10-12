@@ -12,6 +12,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.taxpilot.repository.UserRepository;
 import com.taxpilot.service.JwtService;
+import com.taxpilot.service.TokenRevocationService;
 
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -24,10 +25,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final TokenRevocationService tokenRevocationService;
 
-    public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository) {
+    public JwtAuthenticationFilter(JwtService jwtService,
+                                   UserRepository userRepository,
+                                   TokenRevocationService tokenRevocationService) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
+        this.tokenRevocationService = tokenRevocationService;
     }
 
     @Override
@@ -51,6 +56,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             email = jwtService.extractUsername(token);
         } catch (JwtException exception) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired bearer token");
+            return;
+        }
+
+        if (!jwtService.isAccessToken(token)) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "A refresh token cannot be used as an access token");
+            return;
+        }
+
+        if (tokenRevocationService.isRevoked(token)) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Bearer token has been revoked");
             return;
         }
 

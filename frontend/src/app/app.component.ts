@@ -8,17 +8,19 @@ import {
   TaxPilotApiService,
   TaxProfile
 } from './taxpilot-api.service';
+import { TaxToolsComponent } from './tax-tools.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
+  imports: [TaxToolsComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
   showLanding = true;
   isLogin = true;
-  activePage: 'overview' | 'obligations' | 'profile' | 'deadline' = 'overview';
+  activePage: 'overview' | 'obligations' | 'profile' | 'deadline' | 'tools' = 'overview';
   addingBusiness = false;
   busy = false;
   loadingDashboard = false;
@@ -50,7 +52,7 @@ export class AppComponent {
     return this.businesses.find((business) => business.id === this.selectedBusinessId);
   }
 
-  openPage(page: 'overview' | 'obligations' | 'profile'): void {
+  openPage(page: 'overview' | 'obligations' | 'profile' | 'tools'): void {
     this.activePage = page;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -256,6 +258,8 @@ export class AppComponent {
   }
 
   signOut(): void {
+    const refreshToken = this.api.getStoredUser()?.refreshToken ?? null;
+    void this.api.logout(refreshToken).catch(() => undefined);
     this.api.clearSession();
     this.activePage = 'overview';
     this.businesses = [];

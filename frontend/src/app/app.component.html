@@ -206,6 +206,7 @@
         <a class="nav-item" [class.active]="activePage === 'obligations'" [attr.aria-current]="activePage === 'obligations' ? 'page' : null" href="#obligations" (click)="openPage('obligations'); $event.preventDefault()">Tax obligations</a>
         <a class="nav-item" href="#calendar" (click)="openOverviewSection('calendar'); $event.preventDefault()">Deadline calendar</a>
         <a class="nav-item" [class.active]="activePage === 'profile'" [attr.aria-current]="activePage === 'profile' ? 'page' : null" href="#tax-profile" (click)="openPage('profile'); $event.preventDefault()">Tax profile</a>
+        <a class="nav-item" [class.active]="activePage === 'tools'" [attr.aria-current]="activePage === 'tools' ? 'page' : null" href="#tax-tools" (click)="openPage('tools'); $event.preventDefault()">Filing &amp; checks</a>
       </nav>
       <div class="profile-card">
         <div class="profile-badge">{{ (userName || userEmail || 'TP').slice(0, 2).toUpperCase() }}</div>
@@ -259,8 +260,8 @@
         <header class="topbar">
           <div>
             <p class="eyebrow">{{ activePage === 'overview' ? 'TaxPilot dashboard · Kenya' : 'Business details · Kenya' }}</p>
-            <h1>{{ activePage === 'profile' ? 'Tax profile' : (activePage === 'obligations' ? 'Tax obligations' : (activePage === 'deadline' ? (selectedDeadline?.taxType || 'Deadline details') : (dashboard?.businessName || selectedBusiness?.name || 'Business overview'))) }}</h1>
-            <p class="muted">{{ activePage === 'profile' ? 'Review and update the details used to determine your tax obligations.' : (activePage === 'obligations' ? 'Review the taxes indicated by your saved business profile, including filing frequency and due dates.' : (activePage === 'deadline' ? 'Review the amount, due date, and filing details for this obligation.' : 'A clear view of your recorded tax profile, obligations and upcoming deadlines.')) }}</p>
+            <h1>{{ activePage === 'profile' ? 'Tax profile' : (activePage === 'obligations' ? 'Tax obligations' : (activePage === 'deadline' ? (selectedDeadline?.taxType || 'Deadline details') : (activePage === 'tools' ? 'Filing &amp; checks' : (dashboard?.businessName || selectedBusiness?.name || 'Business overview')))) }}</h1>
+            <p class="muted">{{ activePage === 'profile' ? 'Review and update the details used to determine your tax obligations.' : (activePage === 'obligations' ? 'Review the taxes indicated by your saved business profile, including filing frequency and due dates.' : (activePage === 'deadline' ? 'Review the amount, due date, and filing details for this obligation.' : (activePage === 'tools' ? 'Record filing periods, run the Pre-KRA check, upload documents, and ask the assistant.' : 'A clear view of your recorded tax profile, obligations and upcoming deadlines.'))) }}</p>
           </div>
           <div class="header-actions">
             <button class="secondary-btn" type="button" (click)="addingBusiness = true">Add business</button>
@@ -397,6 +398,8 @@
               </dl>
             </div>
           </section>
+        } @else if (activePage === 'tools') {
+          <app-tax-tools [businessId]="selectedBusinessId"></app-tax-tools>
         } @else if (activePage === 'obligations') {
           @if (loadingDashboard) {
             <div class="loading-panel" role="status">Loading your business tax data…</div>

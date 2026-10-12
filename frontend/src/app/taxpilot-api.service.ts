@@ -77,6 +77,75 @@ export interface DashboardSummary {
   upcomingDeadlines: TaxCalendarEntry[];
 }
 
+export interface TaxCalculation {
+  taxType: string;
+  ruleCode: string;
+  ruleVersion: string;
+  rate: number | null;
+  amount: number;
+  basis: string;
+}
+
+export interface FilingPeriod {
+  id: string;
+  periodStart: string;
+  periodEnd: string;
+  taxableSales: number | null;
+  inputVat: number | null;
+  payrollGross: number | null;
+  withholdingBase: number | null;
+  taxableProfit: number | null;
+  etimsDeclaredSales: number | null;
+  notes: string | null;
+  createdAt: string;
+  totalEstimatedTax: number | null;
+  calculations: TaxCalculation[];
+}
+
+export interface FilingPeriodInput {
+  periodStart: string;
+  periodEnd: string;
+  taxableSales: number | null;
+  inputVat: number | null;
+  payrollGross: number | null;
+  withholdingBase: number | null;
+  taxableProfit: number | null;
+  etimsDeclaredSales: number | null;
+  notes: string | null;
+}
+
+export interface PreKraFinding {
+  severity: string;
+  taxType: string;
+  message: string;
+}
+
+export interface PreKraCheck {
+  businessId: string;
+  filingPeriodId: string;
+  periodEnd: string;
+  passed: boolean;
+  findingsCount: number;
+  findings: PreKraFinding[];
+}
+
+export interface DocumentRecord {
+  id: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  category: string | null;
+  storageProvider: string;
+  url: string;
+  uploadedAt: string;
+}
+
+export interface AssistantAnswer {
+  answer: string;
+  disclaimer: string;
+  model: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TaxPilotApiService {
   private readonly apiBaseUrl = 'http://localhost:8080';
@@ -124,6 +193,13 @@ export class TaxPilotApiService {
     return this.request('/api/auth/register', { method: 'POST', body: payload });
   }
 
+  logout(refreshToken: string | null): Promise<void> {
+    return this.request('/api/auth/logout', {
+      method: 'POST',
+      body: refreshToken ? { refreshToken } : undefined
+    });
+  }
+
   listBusinesses(): Promise<Business[]> {
     return this.request('/api/businesses');
   }
@@ -152,17 +228,58 @@ export class TaxPilotApiService {
     return this.request(`/api/businesses/${businessId}/obligations`);
   }
 
+  listFilingPeriods(businessId: string): Promise<FilingPeriod[]> {
+    return this.request(`/api/businesses/${businessId}/filing-periods`);
+  }
+
+  createFilingPeriod(businessId: string, payload: FilingPeriodInput): Promise<FilingPeriod> {
+    return this.request(`/api/businesses/${businessId}/filing-periods`, { method: 'POST', body: payload });
+  }
+
+  getPreKraCheck(businessId: string): Promise<PreKraCheck> {
+    return this.request(`/api/businesses/${businessId}/pre-kra-check`);
+  }
+
+  listDocuments(businessId: string): Promise<DocumentRecord[]> {
+    return this.request(`/api/businesses/${businessId}/documents`);
+  }
+
+  async uploadDocument(businessId: string, file: File, category: string): Promise<DocumentRecord> {
+    const form = new FormData();
+    form.append('file', file);
+    if (category) {
+      form.append('category', category);
+    }
+    const token = localStorage.getItem(this.tokenKey);
+    const response = await fetch(`${this.apiBaseUrl}/api/businesses/${businessId}/documents`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form
+    });
+    if (!response.ok) {
+      if (response.status === 401) {
+        this.clearSession();
+      }
+      throw new Error(await this.readError(response));
+    }
+    return response.json() as Promise<DocumentRecord>;
+  }
+
+  askAssistant(businessId: string, message: string): Promise<AssistantAnswer> {
+    return this.request(`/api/businesses/${businessId}/assistant`, { method: 'POST', body: { message } });
+  }
+
   private async request<T>(
     path: string,
     options: { method?: string; body?: object } = {}
   ): Promise<T> {
     const token = localStorage.getItem(this.tokenKey);
-    const isAuthRequest = path.startsWith('/api/auth/');
+    const omitsBearer = /\/api\/auth\/(login|register|refresh)$/.test(path);
     const headers: Record<string, string> = {};
     if (options.body) {
       headers['Content-Type'] = 'application/json';
     }
-    if (token && !isAuthRequest) {
+    if (token && !omitsBearer) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
@@ -176,19 +293,24 @@ export class TaxPilotApiService {
       if (response.status === 401) {
         this.clearSession();
       }
-      const responseBody = await response.text();
-      let errorMessage: string | undefined;
-      try {
-        const errorBody = JSON.parse(responseBody) as { message?: string };
-        errorMessage = errorBody.message;
-      } catch {
-        errorMessage = responseBody.trim().slice(0, 300) || undefined;
-      }
-      throw new Error(errorMessage ?? `Request failed (${response.status})`);
+      throw new Error(await this.readError(response));
     }
     if (response.status === 204) {
       return undefined as T;
     }
     return response.json() as Promise<T>;
+  }
+
+  private async readError(response: Response): Promise<string> {
+    const responseBody = await response.text();
+    try {
+      const errorBody = JSON.parse(responseBody) as { message?: string };
+      if (errorBody.message) {
+        return errorBody.message;
+      }
+    } catch {
+      // fall through to raw text
+    }
+    return responseBody.trim().slice(0, 300) || `Request failed (${response.status})`;
   }
 }

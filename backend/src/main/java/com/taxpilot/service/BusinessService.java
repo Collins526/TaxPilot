@@ -17,14 +17,20 @@ import com.taxpilot.domain.business.Business;
 import com.taxpilot.domain.business.BusinessMembership;
 import com.taxpilot.domain.business.TaxProfile;
 import com.taxpilot.domain.business.BusinessType;
+import com.taxpilot.domain.tax.FilingPeriod;
+import com.taxpilot.domain.tax.TaxCalculation;
 import com.taxpilot.domain.user.Role;
 import com.taxpilot.domain.user.User;
+import com.taxpilot.domain.audit.AuditAction;
+import com.taxpilot.dto.AuditLogResponse;
 import com.taxpilot.dto.BusinessResponse;
 import com.taxpilot.dto.CreateBusinessRequest;
 import com.taxpilot.dto.DashboardSummaryResponse;
 import com.taxpilot.dto.TaxCalendarEntry;
 import com.taxpilot.repository.BusinessMembershipRepository;
 import com.taxpilot.repository.BusinessRepository;
+import com.taxpilot.repository.FilingPeriodRepository;
+import com.taxpilot.repository.TaxCalculationRepository;
 import com.taxpilot.repository.TaxProfileRepository;
 import com.taxpilot.repository.UserRepository;
 import com.taxpilot.tax.TaxHealthService;
@@ -41,19 +47,28 @@ public class BusinessService {
     private final TaxProfileRepository taxProfileRepository;
     private final TaxObligationEngine taxObligationEngine;
     private final TaxHealthService taxHealthService;
+    private final AuditService auditService;
+    private final FilingPeriodRepository filingPeriodRepository;
+    private final TaxCalculationRepository taxCalculationRepository;
 
     public BusinessService(BusinessRepository businessRepository,
                            BusinessMembershipRepository membershipRepository,
                            UserRepository userRepository,
                            TaxProfileRepository taxProfileRepository,
                            TaxObligationEngine taxObligationEngine,
-                           TaxHealthService taxHealthService) {
+                           TaxHealthService taxHealthService,
+                           AuditService auditService,
+                           FilingPeriodRepository filingPeriodRepository,
+                           TaxCalculationRepository taxCalculationRepository) {
         this.businessRepository = businessRepository;
         this.membershipRepository = membershipRepository;
         this.userRepository = userRepository;
         this.taxProfileRepository = taxProfileRepository;
         this.taxObligationEngine = taxObligationEngine;
         this.taxHealthService = taxHealthService;
+        this.auditService = auditService;
+        this.filingPeriodRepository = filingPeriodRepository;
+        this.taxCalculationRepository = taxCalculationRepository;
     }
 
     @Transactional
@@ -115,6 +130,9 @@ public class BusinessService {
                 .turnoverTaxApplicable(false)
                 .build());
 
+        auditService.record(AuditAction.BUSINESS_CREATED, "BUSINESS", savedBusiness.getId(),
+                savedBusiness.getId(), "Business profile created: " + savedBusiness.getName());
+
         return toResponse(savedBusiness, List.of(Role.BUSINESS_OWNER.name()));
     }
 
@@ -160,6 +178,9 @@ public class BusinessService {
         profile.setEtimsRegistered(business.isEtimsRegistered());
         profile.setHasEmployees(business.getEmployeeCount() > 0);
         taxProfileRepository.save(profile);
+
+        auditService.record(AuditAction.BUSINESS_UPDATED, "BUSINESS", businessId, businessId,
+                "Business profile updated: " + business.getName());
 
         return toResponse(business, List.of(membership.getRole().name()));
     }
@@ -244,14 +265,17 @@ public class BusinessService {
                 .map(entry -> entry.taxType() + " — " + entry.dueDate().format(java.time.format.DateTimeFormatter.ofPattern("d MMM")))
                 .orElse("No active deadlines");
 
-        BigDecimal estimatedTax = obligations.stream()
-                .filter(TaxObligation::applicable)
-                .map(TaxObligation::estimatedAmount)
-                .filter(amount -> amount != null)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        boolean hasEstimatedAmount = obligations.stream()
-                .filter(TaxObligation::applicable)
-                .anyMatch(obligation -> obligation.estimatedAmount() != null);
+        BigDecimal estimatedTax = null;
+        FilingPeriod latestPeriod = filingPeriodRepository.findFirstByBusinessIdOrderByPeriodEndDesc(businessId).orElse(null);
+        if (latestPeriod != null) {
+            List<TaxCalculation> calculations =
+                    taxCalculationRepository.findByFilingPeriodIdOrderByTaxTypeAsc(latestPeriod.getId());
+            if (!calculations.isEmpty()) {
+                estimatedTax = calculations.stream()
+                        .map(TaxCalculation::getAmount)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+            }
+        }
 
         List<String> obligationNames = obligations.stream()
                 .filter(TaxObligation::applicable)
@@ -263,12 +287,18 @@ public class BusinessService {
                 health.score(),
                 health.status(),
                 nextDeadlineLabel,
-                hasEstimatedAmount ? estimatedTax : null,
+                estimatedTax,
                 issues.size(),
                 issues,
                 obligationNames,
                 calendar
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<AuditLogResponse> getAuditLogs(UUID userId, UUID businessId, int limit) {
+        requireActiveMembership(userId, businessId);
+        return auditService.listForBusiness(businessId, limit);
     }
 
     private List<String> profileIssues(TaxProfile profile) {

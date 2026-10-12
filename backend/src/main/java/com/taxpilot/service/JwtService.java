@@ -16,6 +16,10 @@ import io.jsonwebtoken.security.Keys;
 @Service
 public class JwtService {
 
+    private static final String TOKEN_TYPE_CLAIM = "type";
+    private static final String ACCESS_TOKEN_TYPE = "access";
+    private static final String REFRESH_TOKEN_TYPE = "refresh";
+
     @Value("${app.jwt.secret}")
     private String secret;
 
@@ -26,11 +30,11 @@ public class JwtService {
     private long refreshExpirationMs;
 
     public String generateToken(UserDetails userDetails) {
-        return buildToken(userDetails, expirationMs);
+        return buildToken(userDetails, expirationMs, ACCESS_TOKEN_TYPE);
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
-        return buildToken(userDetails, refreshExpirationMs);
+        return buildToken(userDetails, refreshExpirationMs, REFRESH_TOKEN_TYPE);
     }
 
     public String extractUsername(String token) {
@@ -42,11 +46,24 @@ public class JwtService {
         return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
-    private String buildToken(UserDetails userDetails, long validityMs) {
+    public boolean isAccessToken(String token) {
+        return ACCESS_TOKEN_TYPE.equals(extractClaim(token, claims -> claims.get(TOKEN_TYPE_CLAIM, String.class)));
+    }
+
+    public boolean isRefreshToken(String token) {
+        return REFRESH_TOKEN_TYPE.equals(extractClaim(token, claims -> claims.get(TOKEN_TYPE_CLAIM, String.class)));
+    }
+
+    public long remainingValidityMillis(String token) {
+        return Math.max(0L, extractExpiration(token).getTime() - System.currentTimeMillis());
+    }
+
+    private String buildToken(UserDetails userDetails, long validityMs, String tokenType) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + validityMs);
         return Jwts.builder()
                 .subject(userDetails.getUsername())
+                .claim(TOKEN_TYPE_CLAIM, tokenType)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(getSigningKey())

@@ -11,9 +11,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.taxpilot.domain.user.User;
+import com.taxpilot.dto.AuditLogResponse;
 import com.taxpilot.dto.BusinessResponse;
 import com.taxpilot.dto.CreateBusinessRequest;
 import com.taxpilot.dto.DashboardSummaryResponse;
@@ -80,5 +82,12 @@ public class BusinessController {
     public ResponseEntity<DashboardSummaryResponse> getDashboardSummary(@AuthenticationPrincipal User user,
                                                                         @PathVariable UUID businessId) {
         return ResponseEntity.ok(businessService.getDashboardSummary(user.getId(), businessId));
+    }
+
+    @GetMapping("/{businessId}/audit-logs")
+    public ResponseEntity<List<AuditLogResponse>> getAuditLogs(@AuthenticationPrincipal User user,
+                                                               @PathVariable UUID businessId,
+                                                               @RequestParam(defaultValue = "50") int limit) {
+        return ResponseEntity.ok(businessService.getAuditLogs(user.getId(), businessId, limit));
     }
 }

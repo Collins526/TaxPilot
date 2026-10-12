@@ -25,14 +25,7 @@ public class TaxObligationEngine {
 
     public List<TaxObligation> determine(TaxProfile profile, LocalDate asOf) {
         LocalDate referenceDate = asOf == null ? LocalDate.now() : asOf;
-        List<String> ruleCodes = List.of("PAYE", "VAT", "WITHHOLDING_TAX", "INCOME_TAX", "CORPORATION_TAX", "TURNOVER_TAX");
-        Map<String, TaxRuleVersion> activeRules = taxRuleVersionRepository.findByRuleCodeIn(ruleCodes).stream()
-                .filter(rule -> !rule.getEffectiveFrom().isAfter(referenceDate))
-                .filter(rule -> rule.getEffectiveTo() == null || !rule.getEffectiveTo().isBefore(referenceDate))
-                .sorted(Comparator.comparing(TaxRuleVersion::getEffectiveFrom)
-                        .thenComparing(TaxRuleVersion::getRuleVersion))
-                .collect(Collectors.toMap(TaxRuleVersion::getRuleCode, Function.identity(),
-                        (first, second) -> second));
+        Map<String, TaxRuleVersion> activeRules = activeRules(referenceDate);
 
         List<TaxObligation> obligations = new ArrayList<>();
         addIfApplicable(obligations, profile.hasEmployees(), "PAYE", "Business reports employees", activeRules, referenceDate);
@@ -46,6 +39,18 @@ public class TaxObligationEngine {
         addIfApplicable(obligations, profile.turnoverTaxApplicable(), "TURNOVER_TAX",
                 "Business tax profile indicates turnover tax applies", activeRules, referenceDate);
         return List.copyOf(obligations);
+    }
+
+    public Map<String, TaxRuleVersion> activeRules(LocalDate asOf) {
+        LocalDate referenceDate = asOf == null ? LocalDate.now() : asOf;
+        List<String> ruleCodes = List.of("PAYE", "VAT", "WITHHOLDING_TAX", "INCOME_TAX", "CORPORATION_TAX", "TURNOVER_TAX");
+        return taxRuleVersionRepository.findByRuleCodeIn(ruleCodes).stream()
+                .filter(rule -> !rule.getEffectiveFrom().isAfter(referenceDate))
+                .filter(rule -> rule.getEffectiveTo() == null || !rule.getEffectiveTo().isBefore(referenceDate))
+                .sorted(Comparator.comparing(TaxRuleVersion::getEffectiveFrom)
+                        .thenComparing(TaxRuleVersion::getRuleVersion))
+                .collect(Collectors.toMap(TaxRuleVersion::getRuleCode, Function.identity(),
+                        (first, second) -> second));
     }
 
     private void addIfApplicable(List<TaxObligation> obligations,

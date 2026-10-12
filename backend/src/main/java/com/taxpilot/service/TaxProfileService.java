@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
+import com.taxpilot.domain.audit.AuditAction;
 import com.taxpilot.domain.business.Business;
 import com.taxpilot.domain.business.BusinessMembership;
 import com.taxpilot.domain.business.BusinessType;
@@ -23,10 +24,14 @@ public class TaxProfileService {
 
     private final TaxProfileRepository taxProfileRepository;
     private final BusinessMembershipRepository membershipRepository;
+    private final AuditService auditService;
 
-    public TaxProfileService(TaxProfileRepository taxProfileRepository, BusinessMembershipRepository membershipRepository) {
+    public TaxProfileService(TaxProfileRepository taxProfileRepository,
+                             BusinessMembershipRepository membershipRepository,
+                             AuditService auditService) {
         this.taxProfileRepository = taxProfileRepository;
         this.membershipRepository = membershipRepository;
+        this.auditService = auditService;
     }
 
     @Transactional(readOnly = true)
@@ -72,6 +77,8 @@ public class TaxProfileService {
         business.setEtimsRegistered(profile.isEtimsRegistered());
 
         TaxProfile saved = taxProfileRepository.save(profile);
+        auditService.record(AuditAction.TAX_PROFILE_UPDATED, "TAX_PROFILE", businessId, businessId,
+                "Tax profile updated for business " + business.getName());
         return toResponse(saved);
     }
 

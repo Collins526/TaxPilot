@@ -12,6 +12,7 @@ import com.taxpilot.dto.AuthenticationResponse;
 import com.taxpilot.dto.RefreshRequest;
 import com.taxpilot.dto.RegistrationRequest;
 import com.taxpilot.service.AuthService;
+import com.taxpilot.service.TokenRevocationService;
 
 import jakarta.validation.Valid;
 
@@ -20,9 +21,11 @@ import jakarta.validation.Valid;
 public class AuthController {
 
     private final AuthService authService;
+    private final TokenRevocationService tokenRevocationService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, TokenRevocationService tokenRevocationService) {
         this.authService = authService;
+        this.tokenRevocationService = tokenRevocationService;
     }
 
     @PostMapping("/register")
@@ -41,7 +44,14 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@RequestHeader(value = "Authorization", required = false) String authorization) {
+    public ResponseEntity<Void> logout(@RequestHeader(value = "Authorization", required = false) String authorization,
+                                       @RequestBody(required = false) RefreshRequest body) {
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            tokenRevocationService.revoke(authorization.substring(7));
+        }
+        if (body != null && body.refreshToken() != null) {
+            tokenRevocationService.revoke(body.refreshToken());
+        }
         return ResponseEntity.noContent().build();
     }
 }
