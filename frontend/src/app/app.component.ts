@@ -3,6 +3,7 @@ import {
   AuthResponse,
   Business,
   DashboardSummary,
+  FilingStatus,
   TaxCalendarEntry,
   TaxObligation,
   TaxPilotApiService,
@@ -69,6 +70,43 @@ export class AppComponent {
 
   get selectedDeadlineAmount(): number | null {
     return this.selectedDeadline?.amount ?? this.selectedDeadlineObligation?.estimatedAmount ?? null;
+  }
+
+  get deadlineReminders(): TaxCalendarEntry[] {
+    return this.dashboard?.upcomingDeadlines.filter((entry) =>
+      entry.daysRemaining <= 7 && entry.filingStatus !== 'FILED' && entry.filingStatus !== 'PAID'
+    ) ?? [];
+  }
+
+  async updateDeadlineStatus(filingStatus: FilingStatus): Promise<void> {
+    if (!this.selectedDeadline || !this.selectedBusinessId) {
+      return;
+    }
+    this.busy = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    try {
+      const updated = await this.api.updateFilingStatus(
+        this.selectedBusinessId,
+        this.selectedDeadline.taxType,
+        this.selectedDeadline.dueDate,
+        filingStatus
+      );
+      this.selectedDeadline = updated;
+      if (this.dashboard) {
+        this.dashboard = {
+          ...this.dashboard,
+          upcomingDeadlines: this.dashboard.upcomingDeadlines.map((entry) =>
+            entry.taxType === updated.taxType && entry.dueDate === updated.dueDate ? updated : entry
+          )
+        };
+      }
+      this.successMessage = 'Filing status updated.';
+    } catch (error) {
+      this.errorMessage = this.errorText(error);
+    } finally {
+      this.busy = false;
+    }
   }
 
   returnToOverview(): void {

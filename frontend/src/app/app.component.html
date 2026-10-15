@@ -349,6 +349,26 @@
               }
           </section>
 
+          @if (deadlineReminders.length > 0) {
+            <section class="panel reminder-panel" aria-label="Deadline reminders">
+              <div class="panel-header">
+                <div><p class="eyebrow">In-app reminders</p><h2>Deadlines needing attention</h2></div>
+                <span class="chip warning">{{ deadlineReminders.length }} reminder{{ deadlineReminders.length === 1 ? '' : 's' }}</span>
+              </div>
+              <ul class="deadline-list">
+                @for (entry of deadlineReminders; track entry.taxType) {
+                  <li>
+                    <button class="deadline-open" type="button" (click)="openDeadline(entry)">
+                      <span class="deadline-icon">!</span>
+                      <span class="deadline-copy"><strong>{{ entry.taxType }}</strong><small>{{ entry.daysRemaining < 0 ? 'Overdue' : (entry.daysRemaining === 0 ? 'Due today' : 'Due in ' + entry.daysRemaining + ' days') }} · {{ formatDate(entry.dueDate) }}</small></span>
+                      <span class="status" [class]="entry.filingStatus.toLowerCase().replace('_', '-')">{{ entry.filingStatus.replace('_', ' ') }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+
           <section class="panel-grid lower-grid">
             <article class="panel issue-panel">
               <div class="panel-header">
@@ -395,7 +415,17 @@
                 <div><dt>Filing frequency</dt><dd>{{ selectedDeadlineObligation?.frequency?.replace('_', ' ') || 'Not configured' }}</dd></div>
                 <div><dt>Rule version</dt><dd>{{ selectedDeadlineObligation?.ruleVersion || 'Not configured' }}</dd></div>
                 <div><dt>Applicability</dt><dd>{{ selectedDeadlineObligation?.reason || 'Based on the active tax rules for this business.' }}</dd></div>
+                <div><dt>Filing status</dt><dd>{{ selectedDeadline.filingStatus.replace('_', ' ') }}</dd></div>
               </dl>
+            </div>
+            <div class="filing-status-controls">
+              <p class="eyebrow">Update filing status</p>
+              <p class="muted">This tracks your progress in TaxPilot; it does not submit a return or payment to KRA.</p>
+              <div class="status-actions">
+                <button type="button" class="secondary-btn" [disabled]="busy || selectedDeadline.filingStatus === 'IN_PROGRESS'" (click)="updateDeadlineStatus('IN_PROGRESS')">In progress</button>
+                <button type="button" class="secondary-btn" [disabled]="busy || selectedDeadline.filingStatus === 'FILED'" (click)="updateDeadlineStatus('FILED')">Mark filed</button>
+                <button type="button" class="primary-btn" [disabled]="busy || selectedDeadline.filingStatus === 'PAID'" (click)="updateDeadlineStatus('PAID')">Mark paid</button>
+              </div>
             </div>
           </section>
         } @else if (activePage === 'tools') {

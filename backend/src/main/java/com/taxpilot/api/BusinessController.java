@@ -19,6 +19,7 @@ import com.taxpilot.dto.AuditLogResponse;
 import com.taxpilot.dto.BusinessResponse;
 import com.taxpilot.dto.CreateBusinessRequest;
 import com.taxpilot.dto.DashboardSummaryResponse;
+import com.taxpilot.dto.FilingStatusRequest;
 import com.taxpilot.dto.TaxCalendarEntry;
 import com.taxpilot.service.BusinessService;
 import com.taxpilot.tax.TaxHealthScore;
@@ -70,6 +71,13 @@ public class BusinessController {
     public ResponseEntity<List<TaxCalendarEntry>> getCalendar(@AuthenticationPrincipal User user,
                                                             @PathVariable UUID businessId) {
         return ResponseEntity.ok(businessService.getCalendar(user.getId(), businessId));
+    }
+
+    @PutMapping("/{businessId}/filing-status")
+    public ResponseEntity<TaxCalendarEntry> updateFilingStatus(@AuthenticationPrincipal User user,
+                                                               @PathVariable UUID businessId,
+                                                               @Valid @RequestBody FilingStatusRequest request) {
+        return ResponseEntity.ok(businessService.updateFilingStatus(user.getId(), businessId, request));
     }
 
     @GetMapping("/{businessId}/tax-health")

@@ -63,7 +63,10 @@ export interface TaxCalendarEntry {
   dueDate: string;
   status: string;
   daysRemaining: number;
+  filingStatus: FilingStatus;
 }
+
+export type FilingStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'FILED' | 'PAID';
 
 export interface DashboardSummary {
   businessName: string;
@@ -226,6 +229,13 @@ export class TaxPilotApiService {
 
   getObligations(businessId: string): Promise<TaxObligation[]> {
     return this.request(`/api/businesses/${businessId}/obligations`);
+  }
+
+  updateFilingStatus(businessId: string, taxType: string, dueDate: string, filingStatus: FilingStatus): Promise<TaxCalendarEntry> {
+    return this.request(`/api/businesses/${businessId}/filing-status`, {
+      method: 'PUT',
+      body: { taxType, dueDate, filingStatus }
+    });
   }
 
   listFilingPeriods(businessId: string): Promise<FilingPeriod[]> {

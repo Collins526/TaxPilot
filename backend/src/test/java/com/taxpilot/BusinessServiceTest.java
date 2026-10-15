@@ -17,6 +17,8 @@ import com.taxpilot.domain.user.Role;
 import com.taxpilot.domain.user.User;
 import com.taxpilot.dto.BusinessResponse;
 import com.taxpilot.dto.CreateBusinessRequest;
+import com.taxpilot.dto.FilingStatusRequest;
+import com.taxpilot.domain.tax.FilingStatus;
 import com.taxpilot.dto.AuthenticationRequest;
 import com.taxpilot.dto.AuthenticationResponse;
 import com.taxpilot.dto.RegistrationRequest;
@@ -97,7 +99,14 @@ class BusinessServiceTest {
                 obligations.stream().map(TaxObligation::taxType).toList());
         assertEquals("KE-CALENDAR-2026.1", obligations.get(0).ruleVersion());
         assertNull(obligations.get(0).estimatedAmount());
-        assertNotNull(businessService.getCalendar(user.getId(), response.id()));
+        var calendar = businessService.getCalendar(user.getId(), response.id());
+        assertNotNull(calendar);
+        assertEquals(FilingStatus.NOT_STARTED, calendar.get(0).filingStatus());
+        var updatedDeadline = businessService.updateFilingStatus(user.getId(), response.id(),
+                new FilingStatusRequest(calendar.get(0).taxType(), calendar.get(0).dueDate(), FilingStatus.IN_PROGRESS));
+        assertEquals(FilingStatus.IN_PROGRESS, updatedDeadline.filingStatus());
+        assertEquals(FilingStatus.IN_PROGRESS,
+                businessService.getCalendar(user.getId(), response.id()).get(0).filingStatus());
         assertEquals("Njeri Traders", businessService.getDashboardSummary(user.getId(), response.id()).businessName());
 
         User otherUser = userRepository.save(User.builder()
@@ -113,5 +122,8 @@ class BusinessServiceTest {
                 () -> taxProfileService.getTaxProfile(otherUser.getId(), response.id()));
         assertThrows(ResponseStatusException.class,
                 () -> businessService.getDashboardSummary(otherUser.getId(), response.id()));
+        assertThrows(ResponseStatusException.class,
+                () -> businessService.updateFilingStatus(otherUser.getId(), response.id(),
+                        new FilingStatusRequest(calendar.get(0).taxType(), calendar.get(0).dueDate(), FilingStatus.FILED)));
     }
 }

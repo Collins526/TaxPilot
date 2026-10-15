@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -18,6 +19,8 @@ import com.taxpilot.domain.business.BusinessMembership;
 import com.taxpilot.domain.business.TaxProfile;
 import com.taxpilot.domain.business.BusinessType;
 import com.taxpilot.domain.tax.FilingPeriod;
+import com.taxpilot.domain.tax.FilingDeadlineStatus;
+import com.taxpilot.domain.tax.FilingStatus;
 import com.taxpilot.domain.tax.TaxCalculation;
 import com.taxpilot.domain.user.Role;
 import com.taxpilot.domain.user.User;
@@ -26,10 +29,12 @@ import com.taxpilot.dto.AuditLogResponse;
 import com.taxpilot.dto.BusinessResponse;
 import com.taxpilot.dto.CreateBusinessRequest;
 import com.taxpilot.dto.DashboardSummaryResponse;
+import com.taxpilot.dto.FilingStatusRequest;
 import com.taxpilot.dto.TaxCalendarEntry;
 import com.taxpilot.repository.BusinessMembershipRepository;
 import com.taxpilot.repository.BusinessRepository;
 import com.taxpilot.repository.FilingPeriodRepository;
+import com.taxpilot.repository.FilingDeadlineStatusRepository;
 import com.taxpilot.repository.TaxCalculationRepository;
 import com.taxpilot.repository.TaxProfileRepository;
 import com.taxpilot.repository.UserRepository;
@@ -50,6 +55,7 @@ public class BusinessService {
     private final AuditService auditService;
     private final FilingPeriodRepository filingPeriodRepository;
     private final TaxCalculationRepository taxCalculationRepository;
+    private final FilingDeadlineStatusRepository filingDeadlineStatusRepository;
 
     public BusinessService(BusinessRepository businessRepository,
                            BusinessMembershipRepository membershipRepository,
@@ -59,7 +65,8 @@ public class BusinessService {
                            TaxHealthService taxHealthService,
                            AuditService auditService,
                            FilingPeriodRepository filingPeriodRepository,
-                           TaxCalculationRepository taxCalculationRepository) {
+                           TaxCalculationRepository taxCalculationRepository,
+                           FilingDeadlineStatusRepository filingDeadlineStatusRepository) {
         this.businessRepository = businessRepository;
         this.membershipRepository = membershipRepository;
         this.userRepository = userRepository;
@@ -69,6 +76,7 @@ public class BusinessService {
         this.auditService = auditService;
         this.filingPeriodRepository = filingPeriodRepository;
         this.taxCalculationRepository = taxCalculationRepository;
+        this.filingDeadlineStatusRepository = filingDeadlineStatusRepository;
     }
 
     @Transactional
@@ -220,17 +228,55 @@ public class BusinessService {
             }
             long days = java.time.temporal.ChronoUnit.DAYS.between(today, obligation.nextDueDate());
             String status = days < 0 ? "OVERDUE" : (days <= 7 ? "DUE_SOON" : "PENDING");
-            calendar.add(new TaxCalendarEntry(obligation.taxType(), obligation.estimatedAmount(), obligation.nextDueDate(), status, days));
+            FilingStatus filingStatus = filingDeadlineStatusRepository
+                    .findByBusinessIdAndTaxTypeAndDueDate(businessId, obligation.taxType(), obligation.nextDueDate())
+                    .map(FilingDeadlineStatus::getFilingStatus)
+                    .orElse(FilingStatus.NOT_STARTED);
+            calendar.add(new TaxCalendarEntry(
+                    obligation.taxType(), obligation.estimatedAmount(), obligation.nextDueDate(), status, days, filingStatus));
         }
 
         return calendar;
+    }
+
+    @Transactional
+    public TaxCalendarEntry updateFilingStatus(UUID userId, UUID businessId, FilingStatusRequest request) {
+        BusinessMembership membership = requireActiveMembership(userId, businessId);
+        TaxCalendarEntry deadline = getCalendar(userId, businessId).stream()
+                .filter(entry -> entry.taxType().equals(request.taxType())
+                        && entry.dueDate().equals(request.dueDate()))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tax deadline not found"));
+
+        FilingDeadlineStatus savedStatus = filingDeadlineStatusRepository
+                .findByBusinessIdAndTaxTypeAndDueDate(businessId, deadline.taxType(), deadline.dueDate())
+                .orElseGet(() -> {
+                    FilingDeadlineStatus newStatus = new FilingDeadlineStatus();
+                    newStatus.setBusiness(membership.getBusiness());
+                    newStatus.setTaxType(deadline.taxType());
+                    newStatus.setDueDate(deadline.dueDate());
+                    return newStatus;
+                });
+        savedStatus.setFilingStatus(request.filingStatus());
+        savedStatus.setUpdatedAt(LocalDateTime.now(ZoneId.of("Africa/Nairobi")));
+        filingDeadlineStatusRepository.save(savedStatus);
+        auditService.record(AuditAction.FILING_STATUS_UPDATED, "FILING_DEADLINE",
+                businessId, businessId,
+                "Filing status changed to " + request.filingStatus() + " for " + deadline.taxType()
+                        + " due " + deadline.dueDate());
+
+        return new TaxCalendarEntry(deadline.taxType(), deadline.amount(), deadline.dueDate(),
+                deadline.status(), deadline.daysRemaining(), request.filingStatus());
     }
 
     @Transactional(readOnly = true)
     public com.taxpilot.tax.TaxHealthScore getTaxHealth(UUID userId, UUID businessId) {
         requireActiveMembership(userId, businessId);
         List<TaxCalendarEntry> calendar = getCalendar(userId, businessId);
-        long overdueCount = calendar.stream().filter(entry -> "OVERDUE".equals(entry.status())).count();
+        long overdueCount = calendar.stream()
+                .filter(entry -> "OVERDUE".equals(entry.status()))
+                .filter(entry -> entry.filingStatus() != FilingStatus.FILED && entry.filingStatus() != FilingStatus.PAID)
+                .count();
         TaxProfile profile = taxProfileRepository.findByBusinessId(businessId)
                 .orElseThrow(() -> new IllegalStateException("Tax profile is missing for this business"));
         return taxHealthService.evaluate(

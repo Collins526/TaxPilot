@@ -541,6 +541,33 @@ th {
   color: #16704d;
 }
 
+.status.in-progress {
+  background: #e8efff;
+  color: #3555a0;
+}
+
+.status.filed,
+.status.paid {
+  background: #e5f4ef;
+  color: #16704d;
+}
+
+.filing-status-controls {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #edf1f2;
+}
+
+.filing-status-controls .eyebrow {
+  margin-bottom: 10px;
+}
+
+.status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .deadline-facts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

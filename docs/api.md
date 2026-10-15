@@ -22,6 +22,7 @@ membership of the caller for the target business.
 - `PUT /api/businesses/{businessId}`
 - `GET /api/businesses/{businessId}/obligations`
 - `GET /api/businesses/{businessId}/calendar`
+- `PUT /api/businesses/{businessId}/filing-status` — body `{ "taxType": "VAT", "dueDate": "2026-11-20", "filingStatus": "IN_PROGRESS" }`; supported statuses are `NOT_STARTED`, `IN_PROGRESS`, `FILED`, and `PAID`. Status is stored per business, tax type, and due date.
 - `GET /api/businesses/{businessId}/tax-health`
 - `GET /api/businesses/{businessId}/dashboard`
 - `GET /api/businesses/{businessId}/audit-logs?limit=50`
@@ -50,5 +51,10 @@ membership of the caller for the target business.
 ## Utility
 
 - `GET /api/health`
+
+Upcoming deadlines within seven days and overdue deadlines that are not filed or paid
+appear as in-app reminders on the dashboard. This release does not send email or SMS.
+Updating a filing status is a tracking action only; it does not submit a return or
+payment to KRA. Changes are included in the business audit log.
 
 The exact contract can evolve as the product domain grows, but the API remains the source of truth for the frontend.
