@@ -1,8 +1,6 @@
 package com.taxpilot.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -11,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.EnumSet;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,26 +32,27 @@ class AdminBootstrapServiceTest {
     }
 
     @Test
-    void createsEnabledAdminWithOnlyAdminRoleAndHashedPassword() {
+    void createsEnabledAdminWithOnlyAdminRoleAndHashedGeneratedPassword() {
         when(userRepository.existsByRolesContainingOrRolesContaining(Role.ADMIN, Role.SUPER_ADMIN))
                 .thenReturn(false);
-        when(userRepository.findByEmailIgnoreCase("admin@example.test")).thenReturn(Optional.empty());
-        when(passwordEncoder.encode("StrongTestPass123")).thenReturn("$2a$hashed");
+        when(userRepository.findByEmailIgnoreCase(any(String.class))).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(any(String.class))).thenReturn("$2a$hashed");
 
-        service.createIfMissing(" System ", " Administrator ", "Admin@Example.Test ",
-                " +254700000000 ", "StrongTestPass123");
+        var credentials = service.createIfMissing().orElseThrow();
 
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).saveAndFlush(userCaptor.capture());
         User created = userCaptor.getValue();
         assertEquals("System", created.getFirstName());
         assertEquals("Administrator", created.getLastName());
-        assertEquals("admin@example.test", created.getEmail());
-        assertEquals("+254700000000", created.getPhone());
+        assertEquals(credentials.email(), created.getEmail());
+        assertTrue(Pattern.matches("system-admin-[0-9a-f]{32}@taxpilot\\.local", credentials.email()));
+        assertEquals("Not provided", created.getPhone());
+        assertTrue(credentials.password().length() >= 40);
         assertEquals("$2a$hashed", created.getPasswordHash());
         assertEquals(EnumSet.of(Role.ADMIN), created.getRoles());
         assertTrue(created.isEnabled());
-        verify(passwordEncoder).encode("StrongTestPass123");
+        verify(passwordEncoder).encode(credentials.password());
     }
 
     @Test
@@ -60,25 +60,23 @@ class AdminBootstrapServiceTest {
         when(userRepository.existsByRolesContainingOrRolesContaining(Role.ADMIN, Role.SUPER_ADMIN))
                 .thenReturn(true);
 
-        service.createIfMissing("System", "Administrator", "admin@example.test",
-                "+254700000000", "StrongTestPass123");
+        assertTrue(service.createIfMissing().isEmpty());
 
         verify(userRepository, never()).saveAndFlush(any(User.class));
         verify(passwordEncoder, never()).encode(any(String.class));
     }
 
     @Test
-    void refusesToPromoteAnExistingNonAdminAccount() {
+    void regeneratesEmailIfGeneratedAddressAlreadyBelongsToAnAccount() {
         when(userRepository.existsByRolesContainingOrRolesContaining(Role.ADMIN, Role.SUPER_ADMIN))
                 .thenReturn(false);
-        when(userRepository.findByEmailIgnoreCase("admin@example.test"))
-                .thenReturn(Optional.of(User.builder().email("admin@example.test").build()));
+        when(userRepository.findByEmailIgnoreCase(any(String.class)))
+                .thenReturn(Optional.of(User.builder().build()), Optional.empty());
+        when(passwordEncoder.encode(any(String.class))).thenReturn("$2a$hashed");
 
-        assertThrows(IllegalStateException.class,
-                () -> service.createIfMissing("System", "Administrator", "admin@example.test",
-                        "+254700000000", "StrongTestPass123"));
+        var credentials = service.createIfMissing().orElseThrow();
 
-        verify(userRepository, never()).saveAndFlush(any(User.class));
-        verify(passwordEncoder, never()).encode(any(String.class));
+        assertTrue(Pattern.matches("system-admin-[0-9a-f]{32}@taxpilot\\.local", credentials.email()));
+        verify(userRepository).saveAndFlush(any(User.class));
     }
 }

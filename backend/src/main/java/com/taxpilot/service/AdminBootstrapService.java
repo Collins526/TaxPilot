@@ -1,7 +1,11 @@
 package com.taxpilot.service;
 
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.EnumSet;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,6 +18,9 @@ import com.taxpilot.repository.UserRepository;
 @Service
 public class AdminBootstrapService {
 
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final int PASSWORD_BYTES = 32;
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -23,26 +30,41 @@ public class AdminBootstrapService {
     }
 
     @Transactional
-    public void createIfMissing(String firstName, String lastName, String email, String phone, String password) {
+    public Optional<GeneratedCredentials> createIfMissing() {
         if (userRepository.existsByRolesContainingOrRolesContaining(Role.ADMIN, Role.SUPER_ADMIN)) {
-            return;
+            return Optional.empty();
         }
 
-        String normalizedEmail = email.trim().toLowerCase(Locale.ROOT);
-        if (userRepository.findByEmailIgnoreCase(normalizedEmail).isPresent()) {
-            throw new IllegalStateException(
-                    "Bootstrap admin email belongs to an existing non-admin account; refusing to change its privileges");
-        }
+        String email = createUniqueAdminEmail();
+        String password = createPassword();
 
         User admin = User.builder()
-                .firstName(firstName.trim())
-                .lastName(lastName.trim())
-                .email(normalizedEmail)
-                .phone(phone.trim())
+                .firstName("System")
+                .lastName("Administrator")
+                .email(email)
+                .phone("Not provided")
                 .passwordHash(passwordEncoder.encode(password))
                 .roles(EnumSet.of(Role.ADMIN))
                 .enabled(true)
                 .build();
         userRepository.saveAndFlush(admin);
+        return Optional.of(new GeneratedCredentials(email, password));
+    }
+
+    private String createUniqueAdminEmail() {
+        String email;
+        do {
+            email = "system-admin-" + UUID.randomUUID().toString().replace("-", "") + "@taxpilot.local";
+        } while (userRepository.findByEmailIgnoreCase(email).isPresent());
+        return email.toLowerCase(Locale.ROOT);
+    }
+
+    private String createPassword() {
+        byte[] randomBytes = new byte[PASSWORD_BYTES];
+        SECURE_RANDOM.nextBytes(randomBytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+    }
+
+    public record GeneratedCredentials(String email, String password) {
     }
 }

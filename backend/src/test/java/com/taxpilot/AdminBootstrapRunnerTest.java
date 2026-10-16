@@ -1,7 +1,6 @@
 package com.taxpilot;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -15,6 +14,7 @@ import com.taxpilot.config.AdminBootstrapRunner;
 import com.taxpilot.domain.user.Role;
 import com.taxpilot.repository.UserRepository;
 import com.taxpilot.service.AdminBootstrapService;
+import com.taxpilot.service.AdminBootstrapService.GeneratedCredentials;
 
 class AdminBootstrapRunnerTest {
 
@@ -24,8 +24,7 @@ class AdminBootstrapRunnerTest {
 
     @BeforeEach
     void setUp() {
-        runner = new AdminBootstrapRunner(userRepository, bootstrapService,
-                "System", "Administrator", "admin@example.test", "+254700000000", "StrongTestPass123");
+        runner = new AdminBootstrapRunner(userRepository, bootstrapService);
     }
 
     @Test
@@ -35,52 +34,19 @@ class AdminBootstrapRunnerTest {
 
         assertDoesNotThrow(() -> runner.run(new DefaultApplicationArguments(new String[0])));
 
-        verify(bootstrapService, never()).createIfMissing(
-                org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.anyString());
+        verify(bootstrapService, never()).createIfMissing();
     }
 
     @Test
-    void requiresValidBootstrapConfigurationWhenNoAdminExists() {
+    void delegatesAdminCreationWhenNoAdminExists() {
         when(userRepository.existsByRolesContainingOrRolesContaining(Role.ADMIN, Role.SUPER_ADMIN))
                 .thenReturn(false);
-        runner = new AdminBootstrapRunner(userRepository, bootstrapService, "", "", "", "", "");
+        when(bootstrapService.createIfMissing())
+                .thenReturn(java.util.Optional.of(new GeneratedCredentials("admin@taxpilot.local", "temporary")));
 
-        assertThrows(IllegalStateException.class,
-                () -> runner.run(new DefaultApplicationArguments(new String[0])));
+        assertDoesNotThrow(() -> runner.run(new DefaultApplicationArguments(new String[0])));
 
-        verify(bootstrapService, never()).createIfMissing(
-                org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.anyString());
-    }
-
-    @Test
-    void rejectsInvalidEmailAndTooShortBootstrapPassword() {
-        when(userRepository.existsByRolesContainingOrRolesContaining(Role.ADMIN, Role.SUPER_ADMIN))
-                .thenReturn(false);
-        runner = new AdminBootstrapRunner(userRepository, bootstrapService,
-                "System", "Administrator", "not-an-email", "+254700000000", "short");
-
-        assertThrows(IllegalStateException.class,
-                () -> runner.run(new DefaultApplicationArguments(new String[0])));
-
-        runner = new AdminBootstrapRunner(userRepository, bootstrapService,
-                "System", "Administrator", "admin@example.test", "+254700000000", "short");
-        assertThrows(IllegalStateException.class,
-                () -> runner.run(new DefaultApplicationArguments(new String[0])));
-
-        verify(bootstrapService, never()).createIfMissing(
-                org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.anyString());
+        verify(bootstrapService).createIfMissing();
     }
 
     @Test
@@ -88,8 +54,7 @@ class AdminBootstrapRunnerTest {
         when(userRepository.existsByRolesContainingOrRolesContaining(Role.ADMIN, Role.SUPER_ADMIN))
                 .thenReturn(false, true);
         org.mockito.Mockito.doThrow(new DataIntegrityViolationException("unique constraint"))
-                .when(bootstrapService).createIfMissing(
-                        "System", "Administrator", "admin@example.test", "+254700000000", "StrongTestPass123");
+                .when(bootstrapService).createIfMissing();
 
         assertDoesNotThrow(() -> runner.run(new DefaultApplicationArguments(new String[0])));
     }
@@ -99,10 +64,9 @@ class AdminBootstrapRunnerTest {
         when(userRepository.existsByRolesContainingOrRolesContaining(Role.ADMIN, Role.SUPER_ADMIN))
                 .thenReturn(false, false);
         DataIntegrityViolationException failure = new DataIntegrityViolationException("unique constraint");
-        org.mockito.Mockito.doThrow(failure).when(bootstrapService).createIfMissing(
-                "System", "Administrator", "admin@example.test", "+254700000000", "StrongTestPass123");
+        org.mockito.Mockito.doThrow(failure).when(bootstrapService).createIfMissing();
 
-        assertThrows(DataIntegrityViolationException.class,
+        org.junit.jupiter.api.Assertions.assertThrows(DataIntegrityViolationException.class,
                 () -> runner.run(new DefaultApplicationArguments(new String[0])));
     }
 }
