@@ -11,6 +11,8 @@ import com.taxpilot.domain.business.BusinessMembership;
 public interface BusinessMembershipRepository extends JpaRepository<BusinessMembership, UUID> {
     Optional<BusinessMembership> findByBusinessIdAndUserId(UUID businessId, UUID userId);
 
+    List<BusinessMembership> findByBusinessId(UUID businessId);
+
     List<BusinessMembership> findByUserId(UUID userId);
 
     boolean existsByBusinessIdAndUserId(UUID businessId, UUID userId);

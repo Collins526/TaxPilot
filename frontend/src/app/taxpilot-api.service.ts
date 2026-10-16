@@ -26,6 +26,16 @@ export interface Business {
   memberships: string[];
 }
 
+export type BusinessMemberRole = 'ACCOUNTANT' | 'TAX_ADVISOR' | 'EMPLOYEE';
+
+export interface BusinessMember {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}
+
 export interface TaxProfile {
   businessType: string;
   annualTurnover: number;
@@ -132,6 +142,29 @@ export interface PreKraCheck {
   findings: PreKraFinding[];
 }
 
+export interface BooksReconciliationCheck {
+  code: string;
+  booksAmount: number;
+  recordedAmount: number | null;
+  difference: number | null;
+  status: 'MATCH' | 'MISMATCH' | 'NOT_AVAILABLE';
+  message: string;
+}
+
+export interface BooksReconciliation {
+  filingPeriodId: string;
+  periodStart: string;
+  periodEnd: string;
+  fileName: string;
+  transactionCount: number;
+  salesCount: number;
+  purchaseCount: number;
+  bookSales: number;
+  purchaseInputVat: number;
+  passed: boolean;
+  checks: BooksReconciliationCheck[];
+}
+
 export interface DocumentRecord {
   id: string;
   fileName: string;
@@ -215,6 +248,18 @@ export class TaxPilotApiService {
     return this.request(`/api/businesses/${businessId}`, { method: 'PUT', body: payload });
   }
 
+  listBusinessMembers(businessId: string): Promise<BusinessMember[]> {
+    return this.request(`/api/businesses/${businessId}/members`);
+  }
+
+  addBusinessMember(businessId: string, email: string, role: BusinessMemberRole): Promise<BusinessMember> {
+    return this.request(`/api/businesses/${businessId}/members`, { method: 'POST', body: { email, role } });
+  }
+
+  removeBusinessMember(businessId: string, userId: string): Promise<void> {
+    return this.request(`/api/businesses/${businessId}/members/${userId}`, { method: 'DELETE' });
+  }
+
   getTaxProfile(businessId: string): Promise<TaxProfile> {
     return this.request(`/api/businesses/${businessId}/tax-profile`);
   }
@@ -248,6 +293,27 @@ export class TaxPilotApiService {
 
   getPreKraCheck(businessId: string): Promise<PreKraCheck> {
     return this.request(`/api/businesses/${businessId}/pre-kra-check`);
+  }
+
+  async reconcileBooks(businessId: string, periodId: string, file: File): Promise<BooksReconciliation> {
+    const form = new FormData();
+    form.append('file', file);
+    const token = localStorage.getItem(this.tokenKey);
+    const response = await fetch(
+      `${this.apiBaseUrl}/api/businesses/${businessId}/filing-periods/${periodId}/reconcile`,
+      {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form
+      }
+    );
+    if (!response.ok) {
+      if (response.status === 401) {
+        this.clearSession();
+      }
+      throw new Error(await this.readError(response));
+    }
+    return response.json() as Promise<BooksReconciliation>;
   }
 
   listDocuments(businessId: string): Promise<DocumentRecord[]> {

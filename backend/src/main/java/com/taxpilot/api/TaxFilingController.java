@@ -4,18 +4,23 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.taxpilot.domain.user.User;
 import com.taxpilot.dto.FilingPeriodRequest;
 import com.taxpilot.dto.FilingPeriodResponse;
+import com.taxpilot.dto.BooksReconciliationResponse;
 import com.taxpilot.dto.PreKraCheckResponse;
+import com.taxpilot.service.BooksReconciliationService;
 import com.taxpilot.service.TaxFilingService;
 
 import jakarta.validation.Valid;
@@ -25,9 +30,12 @@ import jakarta.validation.Valid;
 public class TaxFilingController {
 
     private final TaxFilingService taxFilingService;
+    private final BooksReconciliationService booksReconciliationService;
 
-    public TaxFilingController(TaxFilingService taxFilingService) {
+    public TaxFilingController(TaxFilingService taxFilingService,
+                               BooksReconciliationService booksReconciliationService) {
         this.taxFilingService = taxFilingService;
+        this.booksReconciliationService = booksReconciliationService;
     }
 
     @PostMapping("/{businessId}/filing-periods")
@@ -54,5 +62,14 @@ public class TaxFilingController {
     public ResponseEntity<PreKraCheckResponse> runPreKraCheck(@AuthenticationPrincipal User user,
                                                               @PathVariable UUID businessId) {
         return ResponseEntity.ok(taxFilingService.runPreKraCheck(user.getId(), businessId));
+    }
+
+    @PostMapping(path = "/{businessId}/filing-periods/{periodId}/reconcile",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<BooksReconciliationResponse> reconcileBooks(@AuthenticationPrincipal User user,
+                                                                      @PathVariable UUID businessId,
+                                                                      @PathVariable UUID periodId,
+                                                                      @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(booksReconciliationService.reconcile(user.getId(), businessId, periodId, file));
     }
 }

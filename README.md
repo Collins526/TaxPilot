@@ -13,7 +13,7 @@ TaxPilot is a Kenyan SME tax compliance platform built as a monorepo with a Spri
 
 ## Current implementation scope
 
-The application covers registration/login, business onboarding, a business tax profile, profile-driven obligations, a personalized calendar and dashboard, filing-period tax calculations, filing-status tracking, in-app deadline reminders, document uploads, and Pre-KRA consistency checks. Tax schedule rules are stored with versions and effective dates, and calculations are deterministic and auditable. Filing-status updates are for tracking only; TaxPilot does not submit returns or payments to KRA. Email/SMS reminders and direct KRA/eTIMS integrations are not currently available.
+The application covers registration/login, business onboarding, a business tax profile, profile-driven obligations, a personalized calendar and dashboard, filing-period tax calculations and explanations, CSV compliance-pack exports, filing-status tracking, in-app deadline reminders, CSV books-to-tax reconciliation, existing-user business collaboration, document uploads, and Pre-KRA consistency checks. Tax schedule rules are stored with versions and effective dates, and calculations are deterministic and auditable. Filing-status updates are for tracking only; TaxPilot does not submit returns or payments to KRA. Email/SMS reminders and direct KRA/eTIMS integrations are not currently available.
 
 ## Quick start
 

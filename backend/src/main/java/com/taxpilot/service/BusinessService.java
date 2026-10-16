@@ -146,7 +146,7 @@ public class BusinessService {
 
     @Transactional
     public BusinessResponse updateBusiness(UUID userId, UUID businessId, CreateBusinessRequest request) {
-        BusinessMembership membership = requireActiveMembership(userId, businessId);
+        BusinessMembership membership = requireBusinessOwner(userId, businessId);
         Business business = membership.getBusiness();
         if (!business.getRegistrationNumber().equalsIgnoreCase(request.registrationNumber())
                 && businessRepository.existsByRegistrationNumber(request.registrationNumber())) {
@@ -365,6 +365,13 @@ public class BusinessService {
     private BusinessMembership requireActiveMembership(UUID userId, UUID businessId) {
         return membershipRepository.findByBusinessIdAndUserId(businessId, userId)
                 .filter(BusinessMembership::isActive)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Business not found"));
+    }
+
+    private BusinessMembership requireBusinessOwner(UUID userId, UUID businessId) {
+        return membershipRepository.findByBusinessIdAndUserId(businessId, userId)
+                .filter(BusinessMembership::isActive)
+                .filter(membership -> membership.getRole() == Role.BUSINESS_OWNER)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Business not found"));
     }
 

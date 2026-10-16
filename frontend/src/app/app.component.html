@@ -207,6 +207,9 @@
         <a class="nav-item" href="#calendar" (click)="openOverviewSection('calendar'); $event.preventDefault()">Deadline calendar</a>
         <a class="nav-item" [class.active]="activePage === 'profile'" [attr.aria-current]="activePage === 'profile' ? 'page' : null" href="#tax-profile" (click)="openPage('profile'); $event.preventDefault()">Tax profile</a>
         <a class="nav-item" [class.active]="activePage === 'tools'" [attr.aria-current]="activePage === 'tools' ? 'page' : null" href="#tax-tools" (click)="openPage('tools'); $event.preventDefault()">Filing &amp; checks</a>
+        @if (canManageBusiness) {
+          <a class="nav-item" [class.active]="activePage === 'team'" [attr.aria-current]="activePage === 'team' ? 'page' : null" href="#team" (click)="openPage('team'); $event.preventDefault()">Team access</a>
+        }
       </nav>
       <div class="profile-card">
         <div class="profile-badge">{{ (userName || userEmail || 'TP').slice(0, 2).toUpperCase() }}</div>
@@ -260,8 +263,8 @@
         <header class="topbar">
           <div>
             <p class="eyebrow">{{ activePage === 'overview' ? 'TaxPilot dashboard · Kenya' : 'Business details · Kenya' }}</p>
-            <h1>{{ activePage === 'profile' ? 'Tax profile' : (activePage === 'obligations' ? 'Tax obligations' : (activePage === 'deadline' ? (selectedDeadline?.taxType || 'Deadline details') : (activePage === 'tools' ? 'Filing &amp; checks' : (dashboard?.businessName || selectedBusiness?.name || 'Business overview')))) }}</h1>
-            <p class="muted">{{ activePage === 'profile' ? 'Review and update the details used to determine your tax obligations.' : (activePage === 'obligations' ? 'Review the taxes indicated by your saved business profile, including filing frequency and due dates.' : (activePage === 'deadline' ? 'Review the amount, due date, and filing details for this obligation.' : (activePage === 'tools' ? 'Record filing periods, run the Pre-KRA check, upload documents, and ask the assistant.' : 'A clear view of your recorded tax profile, obligations and upcoming deadlines.'))) }}</p>
+            <h1>{{ activePage === 'profile' ? 'Tax profile' : (activePage === 'obligations' ? 'Tax obligations' : (activePage === 'deadline' ? (selectedDeadline?.taxType || 'Deadline details') : (activePage === 'tools' ? 'Filing &amp; checks' : (activePage === 'team' ? 'Team access' : (dashboard?.businessName || selectedBusiness?.name || 'Business overview'))))) }}</h1>
+            <p class="muted">{{ activePage === 'profile' ? 'Review and update the details used to determine your tax obligations.' : (activePage === 'obligations' ? 'Review the taxes indicated by your saved business profile, including filing frequency and due dates.' : (activePage === 'deadline' ? 'Review the amount, due date, and filing details for this obligation.' : (activePage === 'tools' ? 'Record filing periods, run the Pre-KRA check, upload documents, and ask the assistant.' : (activePage === 'team' ? 'Grant or remove access for people who already have a TaxPilot account.' : 'A clear view of your recorded tax profile, obligations and upcoming deadlines.')))) }}</p>
           </div>
           <div class="header-actions">
             <button class="secondary-btn" type="button" (click)="addingBusiness = true">Add business</button>
@@ -428,8 +431,50 @@
               </div>
             </div>
           </section>
+        } @else if (activePage === 'team' && canManageBusiness) {
+          <section class="panel" id="team">
+            <div class="panel-header">
+              <div><p class="eyebrow">Business access</p><h2>Manage your team</h2></div>
+              <span class="chip neutral">{{ teamMembers.length }} member{{ teamMembers.length === 1 ? '' : 's' }}</span>
+            </div>
+            <p class="muted">Only existing TaxPilot accounts can be added. Access is granted immediately. Accountants, tax advisers, and employees can work with this business's tax profile, filings, and documents. Only the owner can edit business details or manage team access.</p>
+            <form class="form-grid team-invite-form" (submit)="addTeamMember($event)">
+              <label>Email address<input name="memberEmail" type="email" required maxlength="255" placeholder="accountant@example.com"></label>
+              <label>Role
+                <select name="memberRole" required>
+                  <option value="ACCOUNTANT">Accountant</option>
+                  <option value="TAX_ADVISOR">Tax adviser</option>
+                  <option value="EMPLOYEE">Employee</option>
+                </select>
+              </label>
+              <button class="primary-btn" type="submit" [disabled]="busy">{{ busy ? 'Adding…' : 'Add member' }}</button>
+            </form>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Access</th></tr></thead>
+                <tbody>
+                  @for (member of teamMembers; track member.userId) {
+                    <tr>
+                      <td><strong>{{ member.firstName }} {{ member.lastName }}</strong></td>
+                      <td>{{ member.email }}</td>
+                      <td>{{ member.role.replace('_', ' ') }}</td>
+                      <td>
+                        @if (member.role === 'BUSINESS_OWNER') {
+                          <span class="chip success">Owner</span>
+                        } @else {
+                          <button class="secondary-btn" type="button" [disabled]="busy" (click)="removeTeamMember(member)">Remove access</button>
+                        }
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="4" class="empty-state">No active members found.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
         } @else if (activePage === 'tools') {
-          <app-tax-tools [businessId]="selectedBusinessId"></app-tax-tools>
+          <app-tax-tools [businessId]="selectedBusinessId" [businessName]="selectedBusiness?.name || 'Business'"></app-tax-tools>
         } @else if (activePage === 'obligations') {
           @if (loadingDashboard) {
             <div class="loading-panel" role="status">Loading your business tax data…</div>
@@ -462,7 +507,7 @@
             </section>
           }
         } @else {
-          @if (selectedBusiness) {
+          @if (selectedBusiness && canManageBusiness) {
             <details class="business-edit panel">
               <summary>Edit business profile</summary>
               <form class="form-grid" (submit)="saveBusiness($event)">

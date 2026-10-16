@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import {
   AuthResponse,
   Business,
+  BusinessMember,
+  BusinessMemberRole,
   DashboardSummary,
   FilingStatus,
   TaxCalendarEntry,
@@ -21,7 +23,7 @@ import { TaxToolsComponent } from './tax-tools.component';
 export class AppComponent {
   showLanding = true;
   isLogin = true;
-  activePage: 'overview' | 'obligations' | 'profile' | 'deadline' | 'tools' = 'overview';
+  activePage: 'overview' | 'obligations' | 'profile' | 'deadline' | 'tools' | 'team' = 'overview';
   addingBusiness = false;
   busy = false;
   loadingDashboard = false;
@@ -30,6 +32,7 @@ export class AppComponent {
   userName = '';
   userEmail = '';
   businesses: Business[] = [];
+  teamMembers: BusinessMember[] = [];
   selectedBusinessId = '';
   dashboard: DashboardSummary | null = null;
   obligations: TaxObligation[] = [];
@@ -53,7 +56,11 @@ export class AppComponent {
     return this.businesses.find((business) => business.id === this.selectedBusinessId);
   }
 
-  openPage(page: 'overview' | 'obligations' | 'profile' | 'tools'): void {
+  get canManageBusiness(): boolean {
+    return this.selectedBusiness?.memberships.includes('BUSINESS_OWNER') ?? false;
+  }
+
+  openPage(page: 'overview' | 'obligations' | 'profile' | 'tools' | 'team'): void {
     this.activePage = page;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -239,6 +246,61 @@ export class AppComponent {
     }
   }
 
+  async addTeamMember(event: SubmitEvent): Promise<void> {
+    event.preventDefault();
+    if (!this.selectedBusinessId || !this.canManageBusiness) {
+      return;
+    }
+    const form = event.currentTarget as HTMLFormElement;
+    const values = new FormData(form);
+    const roleValue = String(values.get('memberRole') ?? '');
+    let role: BusinessMemberRole;
+    if (roleValue === 'ACCOUNTANT' || roleValue === 'TAX_ADVISOR' || roleValue === 'EMPLOYEE') {
+      role = roleValue;
+    } else {
+      this.errorMessage = 'Choose a valid team role.';
+      return;
+    }
+    this.busy = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    try {
+      const member = await this.api.addBusinessMember(
+        this.selectedBusinessId,
+        String(values.get('memberEmail') ?? '').trim(),
+        role
+      );
+      this.teamMembers = [...this.teamMembers, member].sort((left, right) =>
+        left.firstName.localeCompare(right.firstName)
+      );
+      form.reset();
+      this.successMessage = `${member.firstName} ${member.lastName} now has access to this business.`;
+    } catch (error) {
+      this.errorMessage = this.errorText(error);
+    } finally {
+      this.busy = false;
+    }
+  }
+
+  async removeTeamMember(member: BusinessMember): Promise<void> {
+    if (!this.selectedBusinessId || !this.canManageBusiness
+        || !window.confirm(`Remove ${member.firstName} ${member.lastName}'s access to this business?`)) {
+      return;
+    }
+    this.busy = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    try {
+      await this.api.removeBusinessMember(this.selectedBusinessId, member.userId);
+      this.teamMembers = this.teamMembers.filter((current) => current.userId !== member.userId);
+      this.successMessage = `${member.firstName} ${member.lastName}'s access was removed.`;
+    } catch (error) {
+      this.errorMessage = this.errorText(error);
+    } finally {
+      this.busy = false;
+    }
+  }
+
   cancelAddingBusiness(): void {
     this.addingBusiness = false;
     this.errorMessage = '';
@@ -289,7 +351,7 @@ export class AppComponent {
   async switchBusiness(event: Event): Promise<void> {
     this.selectedBusinessId = (event.currentTarget as HTMLSelectElement).value;
     this.selectedDeadline = null;
-    if (this.activePage === 'deadline') {
+    if (this.activePage === 'deadline' || (this.activePage === 'team' && !this.canManageBusiness)) {
       this.activePage = 'overview';
     }
     await this.loadSelectedBusiness();
@@ -301,6 +363,7 @@ export class AppComponent {
     this.api.clearSession();
     this.activePage = 'overview';
     this.businesses = [];
+    this.teamMembers = [];
     this.selectedBusinessId = '';
     this.dashboard = null;
     this.obligations = [];
@@ -367,18 +430,21 @@ export class AppComponent {
       this.dashboard = null;
       this.obligations = [];
       this.profile = null;
+      this.teamMembers = [];
       return;
     }
     this.loadingDashboard = true;
     try {
-      const [dashboard, obligations, profile] = await Promise.all([
+      const [dashboard, obligations, profile, teamMembers] = await Promise.all([
         this.api.getDashboard(this.selectedBusinessId),
         this.api.getObligations(this.selectedBusinessId),
-        this.api.getTaxProfile(this.selectedBusinessId)
+        this.api.getTaxProfile(this.selectedBusinessId),
+        this.canManageBusiness ? this.api.listBusinessMembers(this.selectedBusinessId) : Promise.resolve([])
       ]);
       this.dashboard = dashboard;
       this.obligations = obligations;
       this.profile = profile;
+      this.teamMembers = teamMembers;
     } catch (error) {
       this.errorMessage = this.errorText(error);
     } finally {
