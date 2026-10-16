@@ -17,7 +17,7 @@ The application covers registration/login, business onboarding, a business tax p
 
 ## Quick start
 
-1. Copy `.env.example` to `.env` and set private database and JWT credentials. For Supabase, use the project host, database, username, password and `DB_SSLMODE=require`. Set `CORS_ALLOWED_ORIGINS` to the frontend's origin (comma-separated if there are multiple). `.env` is git-ignored.
+1. Copy `.env.example` to `.env` and set private database, JWT, and initial administrator credentials. Use a unique random administrator password of at least 12 characters. The first startup creates the system admin only if no `ADMIN` or `SUPER_ADMIN` exists; later startups never change existing accounts or reset their passwords. For Supabase, use the project host, database, username, password and `DB_SSLMODE=require`. Set `CORS_ALLOWED_ORIGINS` to the frontend's origin (comma-separated if there are multiple). `.env` is git-ignored.
 2. Start the stack:
    ```bash
    docker compose up --build
@@ -31,7 +31,7 @@ The application covers registration/login, business onboarding, a business tax p
   ```bash
   cd backend
   # Set DB_HOST=localhost when connecting to a local PostgreSQL server.
-  # The backend loads the repository-level .env; set JWT_SECRET there as well.
+  # The backend loads the repository-level .env; set JWT_SECRET and the bootstrap admin credentials there as well.
   mvn spring-boot:run
   ```
 

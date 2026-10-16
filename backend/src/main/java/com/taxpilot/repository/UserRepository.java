@@ -5,12 +5,15 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.taxpilot.domain.user.Role;
 import com.taxpilot.domain.user.User;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
 
     Optional<User> findByEmailIgnoreCase(String email);
+
+    boolean existsByRolesContainingOrRolesContaining(Role role, Role otherRole);
 
     boolean existsByEmail(String email);
 }

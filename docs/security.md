@@ -11,3 +11,4 @@ The backend uses JWT-based authentication and role-scoped access for business-re
 - Validation on request payloads and tax calculations.
 - Production profile for validated PostgreSQL configuration.
 - Audit logging of authentication events and business/tax-profile mutations, scoped per business.
+- On startup, create one system `ADMIN` only when neither an `ADMIN` nor `SUPER_ADMIN` account exists. Seed credentials are supplied through `BOOTSTRAP_ADMIN_*` environment variables, the password is BCrypt-hashed, and startup fails clearly if no admin exists and required values are missing or invalid. Existing accounts are never modified or promoted.
