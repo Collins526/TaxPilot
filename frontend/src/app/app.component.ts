@@ -23,6 +23,8 @@ import { TaxToolsComponent } from './tax-tools.component';
 export class AppComponent {
   showLanding = true;
   isLogin = true;
+  showPassword = false;
+  showConfirmPassword = false;
   activePage: 'overview' | 'obligations' | 'profile' | 'deadline' | 'tools' | 'team' = 'overview';
   addingBusiness = false;
   busy = false;
@@ -143,14 +145,29 @@ export class AppComponent {
 
   toggleAuthMode(): void {
     this.isLogin = !this.isLogin;
+    this.showPassword = false;
+    this.showConfirmPassword = false;
     this.errorMessage = '';
     this.successMessage = '';
+  }
+
+  togglePasswordVisibility(field: 'password' | 'confirmPassword'): void {
+    if (field === 'password') {
+      this.showPassword = !this.showPassword;
+    } else {
+      this.showConfirmPassword = !this.showConfirmPassword;
+    }
   }
 
   async submitAuth(event: SubmitEvent): Promise<void> {
     event.preventDefault();
     const form = event.currentTarget as HTMLFormElement;
     const values = new FormData(form);
+    const password = String(values.get('password') ?? '');
+    if (!this.isLogin && password !== String(values.get('confirmPassword') ?? '')) {
+      this.errorMessage = 'Passwords do not match.';
+      return;
+    }
     this.busy = true;
     this.errorMessage = '';
     try {
@@ -166,7 +183,7 @@ export class AppComponent {
           lastName: String(values.get('lastName') ?? ''),
           email: String(values.get('email') ?? ''),
           phone: String(values.get('phone') ?? ''),
-          password: String(values.get('password') ?? '')
+          password
         });
       }
       this.api.saveSession(result);

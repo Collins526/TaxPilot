@@ -792,6 +792,50 @@ select:focus {
   margin-top: 23px;
 }
 
+.password-field {
+  position: relative;
+  display: block;
+}
+
+.password-input {
+  padding-right: 46px !important;
+}
+
+.password-visibility {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  transform: translateY(-50%);
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #607680;
+}
+
+.password-visibility:hover {
+  background: #edf4f3;
+  color: #087d6c;
+}
+
+.password-visibility:focus-visible {
+  outline: 2px solid #2e9d89;
+  outline-offset: 1px;
+}
+
+.password-visibility svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
 .full-width {
   width: 100%;
   margin-top: 5px;

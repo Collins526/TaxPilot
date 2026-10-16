@@ -43,6 +43,7 @@ describe('AppComponent', () => {
     expect(compiled.querySelector('h1')?.textContent).toContain('Create your TaxPilot account');
     expect(compiled.querySelector('input[name="firstName"]')).toBeTruthy();
     expect(compiled.querySelector('input[name="email"]')).toBeTruthy();
+    expect(compiled.querySelector('input[name="confirmPassword"]')).toBeTruthy();
   });
 
   it('should open sign-in from the landing page', () => {
@@ -56,5 +57,56 @@ describe('AppComponent', () => {
     fixture.detectChanges();
     expect(compiled.querySelector('h1')?.textContent).toContain('Welcome back');
     expect(compiled.querySelector('input[name="email"]')).toBeTruthy();
+    expect(compiled.querySelector('input[name="confirmPassword"]')).toBeFalsy();
+  });
+
+  it('toggles password visibility with accessible controls', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const getStarted = Array.from(compiled.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Create your account'));
+    getStarted?.click();
+    fixture.detectChanges();
+
+    const password = compiled.querySelector<HTMLInputElement>('input[name="password"]');
+    const confirmPassword = compiled.querySelector<HTMLInputElement>('input[name="confirmPassword"]');
+    const showPassword = compiled.querySelector<HTMLButtonElement>('button[aria-label="Show password"]');
+    const showConfirmPassword = compiled.querySelector<HTMLButtonElement>('button[aria-label="Show confirm password"]');
+    expect(password?.type).toBe('password');
+    expect(confirmPassword?.type).toBe('password');
+
+    showPassword?.click();
+    fixture.detectChanges();
+    expect(password?.type).toBe('text');
+    expect(compiled.querySelector('button[aria-label="Hide password"]')?.getAttribute('aria-pressed')).toBe('true');
+    compiled.querySelector<HTMLButtonElement>('button[aria-label="Hide password"]')?.click();
+    fixture.detectChanges();
+    expect(password?.type).toBe('password');
+
+    showConfirmPassword?.click();
+    fixture.detectChanges();
+    expect(confirmPassword?.type).toBe('text');
+    compiled.querySelector<HTMLButtonElement>('button[aria-label="Hide confirm password"]')?.click();
+    fixture.detectChanges();
+    expect(confirmPassword?.type).toBe('password');
+  });
+
+  it('rejects registration when the password confirmation does not match', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const getStarted = Array.from(compiled.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Create your account'));
+    getStarted?.click();
+    fixture.detectChanges();
+
+    compiled.querySelector<HTMLInputElement>('input[name="password"]')!.value = 'correct-password';
+    compiled.querySelector<HTMLInputElement>('input[name="confirmPassword"]')!.value = 'different-password';
+    const form = compiled.querySelector('form')!;
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+
+    expect(compiled.querySelector('[role="alert"]')?.textContent).toContain('Passwords do not match.');
   });
 });

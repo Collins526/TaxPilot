@@ -169,7 +169,43 @@
           <label>Phone<input name="phone" type="tel" autocomplete="tel" placeholder="+254..." required></label>
         }
         <label>Email<input name="email" type="email" autocomplete="email" required></label>
-        <label>Password<input name="password" type="password" [attr.autocomplete]="isLogin ? 'current-password' : 'new-password'" minlength="8" required></label>
+        <label>Password
+          <span class="password-field">
+            <input class="password-input" name="password" [type]="showPassword ? 'text' : 'password'"
+                   [attr.autocomplete]="isLogin ? 'current-password' : 'new-password'" minlength="8" required>
+            <button class="password-visibility" type="button" (click)="togglePasswordVisibility('password')"
+                    [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+                    [attr.aria-pressed]="showPassword" [attr.title]="showPassword ? 'Hide password' : 'Show password'">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+                @if (showPassword) {
+                  <path d="m4 4 16 16"></path>
+                }
+              </svg>
+            </button>
+          </span>
+        </label>
+        @if (!isLogin) {
+          <label>Confirm password
+            <span class="password-field">
+              <input class="password-input" name="confirmPassword" [type]="showConfirmPassword ? 'text' : 'password'"
+                     autocomplete="new-password" minlength="8" required>
+              <button class="password-visibility" type="button" (click)="togglePasswordVisibility('confirmPassword')"
+                      [attr.aria-label]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'"
+                      [attr.aria-pressed]="showConfirmPassword"
+                      [attr.title]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                  @if (showConfirmPassword) {
+                    <path d="m4 4 16 16"></path>
+                  }
+                </svg>
+              </button>
+            </span>
+          </label>
+        }
         <button class="primary-btn full-width" type="submit" [disabled]="busy">
           {{ busy ? 'Please wait…' : (isLogin ? 'Sign in' : 'Create account') }}
         </button>
