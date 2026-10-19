@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import com.taxpilot.domain.user.Role;
@@ -13,6 +15,7 @@ import com.taxpilot.service.AdminBootstrapService;
 import com.taxpilot.service.AdminBootstrapService.GeneratedCredentials;
 
 @Component
+@Order(Ordered.LOWEST_PRECEDENCE)
 public class AdminBootstrapRunner implements ApplicationRunner {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AdminBootstrapRunner.class);

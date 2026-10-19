@@ -1,6 +1,7 @@
 package com.taxpilot.repository;
 
 import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
 
     Optional<User> findByEmailIgnoreCase(String email);
+
+    List<User> findByEmailStartingWith(String prefix);
 
     boolean existsByRolesContainingOrRolesContaining(Role role, Role otherRole);
 

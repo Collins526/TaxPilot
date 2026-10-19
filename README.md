@@ -23,6 +23,7 @@ The application covers registration/login, business onboarding, a business tax p
    docker compose up --build
    ```
    When no `ADMIN` or `SUPER_ADMIN` exists, startup generates a random system admin email and password, hashes the password, and prints the credentials once to backend startup logs. Save them securely: anyone who can read application logs can see these initial credentials. Later startups do not change existing accounts or reveal the password again. With Docker Compose, retrieve startup output using `docker compose logs backend`.
+   To replace the generated account credentials with your own, set `ADMIN_CREDENTIAL_ROTATION_ENABLED=true`, `ADMIN_CREDENTIAL_ROTATION_EMAIL=admin@taxpilot.com`, and a strong `ADMIN_CREDENTIAL_ROTATION_PASSWORD` (at least 12 characters, at most 72 UTF-8 bytes) in your untracked `.env`, then start the backend once. Rotation targets only the generated `system-admin-…@taxpilot.local` account. After a successful run, set the flag back to `false` and clear the password from `.env`. Do not share or commit the password.
 3. Frontend: http://localhost:4200
 4. Backend: http://localhost:8080
 
