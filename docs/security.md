@@ -8,7 +8,7 @@ The backend uses JWT-based authentication and role-scoped access for business-re
 - Short-lived access tokens and refresh tokens, distinguished by a `type` claim.
 - Redis-backed revocation list so logout invalidates an access/refresh token until it expires.
 - Protected business endpoints tied to user membership.
-- `/api/admin/**` endpoints are role-guarded for `ADMIN` and `SUPER_ADMIN` on the server. Administrative user, business, membership, and tax-rule mutations are recorded in the platform audit trail; the console also exposes platform-wide audit events.
+- `/api/admin/**` endpoints are role-guarded for `ADMIN` and `SUPER_ADMIN` on the server. The console provides platform-wide filing-period visibility; administrative user, business, membership, and tax-rule mutations are recorded in the platform audit trail, which is also exposed in the console.
 - Validation on request payloads and tax calculations.
 - Production profile for validated PostgreSQL configuration.
 - Audit logging of authentication events and business/tax-profile mutations, scoped per business.

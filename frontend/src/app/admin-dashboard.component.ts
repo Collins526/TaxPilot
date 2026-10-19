@@ -3,6 +3,7 @@ import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import {
   AdminAuditEntry,
   AdminBusiness,
+  AdminFilingPeriod,
   AdminOverview,
   AdminTaxRule,
   AdminTaxRuleInput,
@@ -10,7 +11,7 @@ import {
   TaxPilotApiService
 } from './taxpilot-api.service';
 
-type AdminSection = 'overview' | 'users' | 'businesses' | 'audit' | 'rules';
+type AdminSection = 'overview' | 'users' | 'administrators' | 'businesses' | 'filing-periods' | 'audit' | 'rules';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -25,6 +26,7 @@ export class AdminDashboardComponent implements OnInit {
   section: AdminSection = 'overview';
   overview: AdminOverview | null = null;
   users: AdminUser[] = [];
+  filingPeriods: AdminFilingPeriod[] = [];
   businesses: AdminBusiness[] = [];
   auditLogs: AdminAuditEntry[] = [];
   taxRules: AdminTaxRule[] = [];
@@ -57,10 +59,13 @@ export class AdminDashboardComponent implements OnInit {
 
   get filteredUsers(): AdminUser[] {
     const query = this.searchText.trim().toLowerCase();
-    return query
-      ? this.users.filter((user) =>
-          `${user.firstName} ${user.lastName} ${user.email} ${user.roles.join(' ')}`.toLowerCase().includes(query))
-      : this.users;
+    return this.users.filter((user) => {
+      const isAdministrator = user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN');
+      const matchesSection = this.section !== 'administrators' || isAdministrator;
+      const matchesQuery = !query
+        || `${user.firstName} ${user.lastName} ${user.email} ${user.roles.join(' ')}`.toLowerCase().includes(query);
+      return matchesSection && matchesQuery;
+    });
   }
 
   get filteredBusinesses(): AdminBusiness[] {
@@ -76,18 +81,20 @@ export class AdminDashboardComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
     try {
-      const [overview, users, businesses, auditLogs, taxRules] = await Promise.all([
+      const [overview, users, businesses, auditLogs, taxRules, filingPeriods] = await Promise.all([
         this.api.getAdminOverview(),
         this.api.listAdminUsers(),
         this.api.listAdminBusinesses(),
         this.api.listAdminAuditLogs(),
-        this.api.listAdminTaxRules()
+        this.api.listAdminTaxRules(),
+        this.api.listAdminFilingPeriods()
       ]);
       this.overview = overview;
       this.users = users;
       this.businesses = businesses;
       this.auditLogs = auditLogs;
       this.taxRules = taxRules;
+      this.filingPeriods = filingPeriods;
       if (!this.businesses.some((business) => business.id === this.selectedBusinessId)) {
         this.selectedBusinessId = this.businesses[0]?.id ?? '';
       }

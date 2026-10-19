@@ -21,6 +21,7 @@ import com.taxpilot.domain.user.User;
 import com.taxpilot.dto.AdminDtos.AuditView;
 import com.taxpilot.dto.AdminDtos.BusinessView;
 import com.taxpilot.dto.AdminDtos.EnabledRequest;
+import com.taxpilot.dto.AdminDtos.FilingPeriodView;
 import com.taxpilot.dto.AdminDtos.MembershipRequest;
 import com.taxpilot.dto.AdminDtos.MembershipView;
 import com.taxpilot.dto.AdminDtos.Overview;
@@ -46,6 +47,11 @@ public class AdminController {
     @GetMapping("/overview")
     public Overview overview() {
         return adminService.overview();
+    }
+
+    @GetMapping("/filing-periods")
+    public List<FilingPeriodView> filingPeriods(@RequestParam(defaultValue = "500") int limit) {
+        return adminService.filingPeriods(limit);
     }
 
     @GetMapping("/users")

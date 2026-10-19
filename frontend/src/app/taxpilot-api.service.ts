@@ -18,6 +18,15 @@ export interface AdminOverview {
   filingPeriods: number;
 }
 
+export interface AdminFilingPeriod {
+  id: string;
+  businessId: string;
+  businessName: string;
+  periodStart: string;
+  periodEnd: string;
+  createdAt: string;
+}
+
 export interface AdminUser {
   id: string;
   firstName: string;
@@ -426,6 +435,10 @@ export class TaxPilotApiService {
 
   getAdminOverview(): Promise<AdminOverview> {
     return this.request('/api/admin/overview');
+  }
+
+  listAdminFilingPeriods(): Promise<AdminFilingPeriod[]> {
+    return this.request('/api/admin/filing-periods');
   }
 
   listAdminUsers(): Promise<AdminUser[]> {

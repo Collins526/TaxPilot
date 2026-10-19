@@ -7,7 +7,9 @@
     <nav aria-label="Administrator navigation">
       <button [class.active]="section === 'overview'" (click)="setSection('overview')"><span>▦</span> Overview</button>
       <button [class.active]="section === 'users'" (click)="setSection('users')"><span>◎</span> Users</button>
+      <button [class.active]="section === 'administrators'" (click)="setSection('administrators')"><span>♙</span> Administrators</button>
       <button [class.active]="section === 'businesses'" (click)="setSection('businesses')"><span>⌂</span> Businesses</button>
+      <button [class.active]="section === 'filing-periods'" (click)="setSection('filing-periods')"><span>▤</span> Filing periods</button>
       <button [class.active]="section === 'rules'" (click)="setSection('rules')"><span>◈</span> Tax rules</button>
       <button [class.active]="section === 'audit'" (click)="setSection('audit')"><span>≡</span> Audit trail</button>
     </nav>
@@ -28,7 +30,9 @@
         <p class="admin-kicker">TAXPILOT / ADMINISTRATION</p>
         <h1>{{ section === 'overview' ? 'Platform overview' :
           section === 'users' ? 'User management' :
+          section === 'administrators' ? 'Administrator management' :
           section === 'businesses' ? 'Business management' :
+          section === 'filing-periods' ? 'Filing periods' :
           section === 'rules' ? 'Tax rule management' : 'Audit trail' }}</h1>
       </div>
       <div class="header-actions">
@@ -53,10 +57,10 @@
         </section>
 
         <section class="stat-grid" aria-label="Platform statistics">
-          <article class="stat-card"><span class="stat-icon teal">◎</span><small>REGISTERED USERS</small><strong>{{ overview?.users ?? 0 }}</strong><span>{{ overview?.enabledUsers ?? 0 }} enabled accounts</span></article>
-          <article class="stat-card"><span class="stat-icon gold">⌂</span><small>BUSINESSES</small><strong>{{ overview?.businesses ?? 0 }}</strong><span>Platform workspaces</span></article>
-          <article class="stat-card"><span class="stat-icon blue">▤</span><small>FILING PERIODS</small><strong>{{ overview?.filingPeriods ?? 0 }}</strong><span>Records across businesses</span></article>
-          <article class="stat-card"><span class="stat-icon violet">♙</span><small>ADMINISTRATORS</small><strong>{{ overview?.admins ?? 0 }}</strong><span>Privileged accounts</span></article>
+          <button class="stat-card" type="button" (click)="setSection('users')" aria-label="Open registered user management"><span class="stat-icon teal">◎</span><small>REGISTERED USERS</small><strong>{{ overview?.users ?? 0 }}</strong><span>{{ overview?.enabledUsers ?? 0 }} enabled accounts</span></button>
+          <button class="stat-card" type="button" (click)="setSection('businesses')" aria-label="Open business management"><span class="stat-icon gold">⌂</span><small>BUSINESSES</small><strong>{{ overview?.businesses ?? 0 }}</strong><span>Platform workspaces</span></button>
+          <button class="stat-card" type="button" (click)="setSection('filing-periods')" aria-label="Open filing periods"><span class="stat-icon blue">▤</span><small>FILING PERIODS</small><strong>{{ overview?.filingPeriods ?? 0 }}</strong><span>Records across businesses</span></button>
+          <button class="stat-card" type="button" (click)="setSection('administrators')" aria-label="Open administrator management"><span class="stat-icon violet">♙</span><small>ADMINISTRATORS</small><strong>{{ overview?.admins ?? 0 }}</strong><span>Privileged accounts</span></button>
         </section>
 
         <section class="admin-panel overview-panel">
@@ -87,11 +91,11 @@
         </section>
       }
 
-      @if (section === 'users') {
+      @if (section === 'users' || section === 'administrators') {
         <section class="admin-panel">
           <div class="panel-heading">
-            <div><p class="admin-kicker">ACCOUNT DIRECTORY</p><h2>{{ users.length }} user accounts</h2><p class="panel-subtitle">Disable access or permanently remove an account. The final administrator is protected.</p></div>
-            <label class="search-box"><span>⌕</span><input [value]="searchText" (input)="searchText = $any($event.target).value" placeholder="Search users" aria-label="Search users"></label>
+            <div><p class="admin-kicker">{{ section === 'administrators' ? 'PRIVILEGED ACCOUNTS' : 'ACCOUNT DIRECTORY' }}</p><h2>{{ section === 'administrators' ? filteredUsers.length + ' administrator accounts' : users.length + ' user accounts' }}</h2><p class="panel-subtitle">Disable access or permanently remove an account. The final administrator is protected.</p></div>
+            <label class="search-box"><span>⌕</span><input [value]="searchText" (input)="searchText = $any($event.target).value" [placeholder]="section === 'administrators' ? 'Search administrators' : 'Search users'" [attr.aria-label]="section === 'administrators' ? 'Search administrators' : 'Search users'"></label>
           </div>
           <div class="table-scroll">
             <table>
@@ -113,6 +117,24 @@
             </table>
           </div>
           <p class="admin-footnote">Deleting a user permanently removes their account and business memberships. This cannot be undone.</p>
+        </section>
+      }
+
+      @if (section === 'filing-periods') {
+        <section class="admin-panel">
+          <div class="panel-heading">
+            <div><p class="admin-kicker">PLATFORM RECORDS</p><h2>Latest {{ filingPeriods.length }} of {{ overview?.filingPeriods ?? 0 }} filing periods</h2><p class="panel-subtitle">Filing periods across all business workspaces, newest period first.</p></div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>BUSINESS</th><th>PERIOD START</th><th>PERIOD END</th><th>CREATED</th></tr></thead>
+              <tbody>
+                @for (period of filingPeriods; track period.id) {
+                  <tr><td><strong>{{ period.businessName }}</strong><small>{{ period.businessId }}</small></td><td>{{ period.periodStart | date:'mediumDate' }}</td><td>{{ period.periodEnd | date:'mediumDate' }}</td><td>{{ period.createdAt | date:'medium' }}</td></tr>
+                } @empty { <tr><td colspan="4" class="empty-row">No filing periods are available.</td></tr> }
+              </tbody>
+            </table>
+          </div>
         </section>
       }
 

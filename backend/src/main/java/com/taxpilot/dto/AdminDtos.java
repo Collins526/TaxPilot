@@ -25,6 +25,15 @@ public final class AdminDtos {
     public record Overview(long users, long enabledUsers, long admins, long businesses, long filingPeriods) {
     }
 
+    public record FilingPeriodView(
+            UUID id,
+            UUID businessId,
+            String businessName,
+            LocalDate periodStart,
+            LocalDate periodEnd,
+            LocalDateTime createdAt) {
+    }
+
     public record UserView(
             UUID id,
             String firstName,

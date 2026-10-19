@@ -405,6 +405,23 @@ button:disabled {
   align-items: center;
   column-gap: 10px;
   padding: 17px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.stat-card:hover,
+.stat-card:focus-visible {
+  border-color: #94c9be;
+  box-shadow: 0 8px 22px #203b4a12;
+  transform: translateY(-2px);
+}
+
+.stat-card:focus-visible {
+  outline: 3px solid #2eb99e;
+  outline-offset: 3px;
 }
 
 .stat-icon,

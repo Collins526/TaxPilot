@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,12 +14,14 @@ import com.taxpilot.domain.audit.AuditAction;
 import com.taxpilot.domain.audit.AuditLog;
 import com.taxpilot.domain.business.Business;
 import com.taxpilot.domain.business.BusinessMembership;
+import com.taxpilot.domain.tax.FilingPeriod;
 import com.taxpilot.domain.tax.TaxRuleBand;
 import com.taxpilot.domain.tax.TaxRuleVersion;
 import com.taxpilot.domain.user.Role;
 import com.taxpilot.domain.user.User;
 import com.taxpilot.dto.AdminDtos.AuditView;
 import com.taxpilot.dto.AdminDtos.BusinessView;
+import com.taxpilot.dto.AdminDtos.FilingPeriodView;
 import com.taxpilot.dto.AdminDtos.MembershipRequest;
 import com.taxpilot.dto.AdminDtos.MembershipView;
 import com.taxpilot.dto.AdminDtos.Overview;
@@ -92,6 +95,14 @@ public class AdminService {
                         user.isEnabled(),
                         membershipRepository.findByUserId(user.getId()).size()))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<FilingPeriodView> filingPeriods(int limit) {
+        return filingPeriodRepository.findAll(PageRequest.of(
+                        0, safeLimit(limit), Sort.by(Sort.Direction.DESC, "periodEnd")))
+                .map(this::toFilingPeriodView)
+                .getContent();
     }
 
     @Transactional
@@ -373,6 +384,16 @@ public class AdminService {
                 business.getCountryCode(),
                 business.getTimezone(),
                 members);
+    }
+
+    private FilingPeriodView toFilingPeriodView(FilingPeriod filingPeriod) {
+        return new FilingPeriodView(
+                filingPeriod.getId(),
+                filingPeriod.getBusiness().getId(),
+                filingPeriod.getBusiness().getName(),
+                filingPeriod.getPeriodStart(),
+                filingPeriod.getPeriodEnd(),
+                filingPeriod.getCreatedAt());
     }
 
     private AuditView toAuditView(AuditLog entry) {
