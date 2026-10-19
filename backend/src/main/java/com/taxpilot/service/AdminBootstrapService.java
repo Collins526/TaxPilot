@@ -3,9 +3,7 @@ package com.taxpilot.service;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.EnumSet;
-import java.util.Locale;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,6 +18,7 @@ public class AdminBootstrapService {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final int PASSWORD_BYTES = 32;
+    private static final String ADMIN_EMAIL = "admin@taxpilot.com";
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -35,28 +34,23 @@ public class AdminBootstrapService {
             return Optional.empty();
         }
 
-        String email = createUniqueAdminEmail();
+        if (userRepository.findByEmailIgnoreCase(ADMIN_EMAIL).isPresent()) {
+            throw new IllegalStateException(
+                    "Cannot create the system administrator: admin@taxpilot.com belongs to a non-admin account.");
+        }
         String password = createPassword();
 
         User admin = User.builder()
                 .firstName("System")
                 .lastName("Administrator")
-                .email(email)
+                .email(ADMIN_EMAIL)
                 .phone("Not provided")
                 .passwordHash(passwordEncoder.encode(password))
                 .roles(EnumSet.of(Role.ADMIN))
                 .enabled(true)
                 .build();
         userRepository.saveAndFlush(admin);
-        return Optional.of(new GeneratedCredentials(email, password));
-    }
-
-    private String createUniqueAdminEmail() {
-        String email;
-        do {
-            email = "system-admin-" + UUID.randomUUID().toString().replace("-", "") + "@taxpilot.local";
-        } while (userRepository.findByEmailIgnoreCase(email).isPresent());
-        return email.toLowerCase(Locale.ROOT);
+        return Optional.of(new GeneratedCredentials(ADMIN_EMAIL, password));
     }
 
     private String createPassword() {

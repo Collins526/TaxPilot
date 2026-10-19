@@ -106,6 +106,13 @@ public class AuthService {
     private AuthenticationResponse buildResponse(User user) {
         String accessToken = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
-        return new AuthenticationResponse(accessToken, refreshToken, user.getId(), user.getFirstName(), user.getLastName(), user.getEmail());
+        return new AuthenticationResponse(
+                accessToken,
+                refreshToken,
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.getRoles().stream().map(Enum::name).sorted().toList());
     }
 }

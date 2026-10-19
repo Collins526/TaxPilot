@@ -219,6 +219,8 @@
       </p>
     </section>
   </main>
+} @else if (isAdmin) {
+  <app-admin-dashboard (signOutRequested)="signOut()"></app-admin-dashboard>
 } @else {
   <div class="page-shell">
     <aside class="sidebar">

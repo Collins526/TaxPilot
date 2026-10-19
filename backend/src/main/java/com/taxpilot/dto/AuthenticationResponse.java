@@ -1,6 +1,7 @@
 package com.taxpilot.dto;
 
 import java.util.UUID;
+import java.util.List;
 
 public record AuthenticationResponse(
         String accessToken,
@@ -8,6 +9,7 @@ public record AuthenticationResponse(
         UUID userId,
         String firstName,
         String lastName,
-        String email
+        String email,
+        List<String> roles
 ) {
 }

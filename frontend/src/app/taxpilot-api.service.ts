@@ -7,7 +7,86 @@ export interface AuthResponse {
   firstName: string;
   lastName: string;
   email: string;
+  roles: string[];
 }
+
+export interface AdminOverview {
+  users: number;
+  enabledUsers: number;
+  admins: number;
+  businesses: number;
+  filingPeriods: number;
+}
+
+export interface AdminUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  roles: string[];
+  enabled: boolean;
+  businessCount: number;
+}
+
+export interface AdminMembership {
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  active: boolean;
+}
+
+export interface AdminBusiness {
+  id: string;
+  name: string;
+  legalName: string;
+  registrationNumber: string;
+  kraPin: string;
+  industry: string;
+  businessType: string;
+  annualTurnover: number;
+  employeeCount: number;
+  vatRegistered: boolean;
+  etimsRegistered: boolean;
+  countryCode: string;
+  timezone: string;
+  members: AdminMembership[];
+}
+
+export interface AdminAuditEntry {
+  id: string;
+  occurredAt: string;
+  actorEmail: string | null;
+  action: string;
+  resourceType: string;
+  resourceId: string | null;
+  businessId: string | null;
+  outcome: string;
+  details: string | null;
+}
+
+export interface AdminTaxBand {
+  bandOrder: number;
+  lowerBound: number;
+  upperBound: number | null;
+  rate: number;
+}
+
+export interface AdminTaxRule {
+  id: string;
+  ruleCode: string;
+  ruleVersion: string;
+  frequency: string;
+  dueDay: number | null;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  rate: number | null;
+  threshold: number | null;
+  source: string;
+  bands: AdminTaxBand[];
+}
+
+export interface AdminTaxRuleInput extends Omit<AdminTaxRule, 'id'> {}
 
 export interface Business {
   id: string;
@@ -343,6 +422,61 @@ export class TaxPilotApiService {
 
   askAssistant(businessId: string, message: string): Promise<AssistantAnswer> {
     return this.request(`/api/businesses/${businessId}/assistant`, { method: 'POST', body: { message } });
+  }
+
+  getAdminOverview(): Promise<AdminOverview> {
+    return this.request('/api/admin/overview');
+  }
+
+  listAdminUsers(): Promise<AdminUser[]> {
+    return this.request('/api/admin/users?limit=500');
+  }
+
+  setAdminUserEnabled(userId: string, enabled: boolean): Promise<AdminUser> {
+    return this.request(`/api/admin/users/${userId}/enabled`, { method: 'PATCH', body: { enabled } });
+  }
+
+  deleteAdminUser(userId: string): Promise<void> {
+    return this.request(`/api/admin/users/${userId}`, { method: 'DELETE' });
+  }
+
+  listAdminBusinesses(): Promise<AdminBusiness[]> {
+    return this.request('/api/admin/businesses?limit=500');
+  }
+
+  updateAdminBusiness(businessId: string, payload: Record<string, unknown>): Promise<AdminBusiness> {
+    return this.request(`/api/admin/businesses/${businessId}`, { method: 'PUT', body: payload });
+  }
+
+  deleteAdminBusiness(businessId: string): Promise<void> {
+    return this.request(`/api/admin/businesses/${businessId}`, { method: 'DELETE' });
+  }
+
+  addAdminBusinessMember(businessId: string, email: string, role: string): Promise<AdminMembership[]> {
+    return this.request(`/api/admin/businesses/${businessId}/members`, {
+      method: 'POST',
+      body: { email, role }
+    });
+  }
+
+  removeAdminBusinessMember(businessId: string, userId: string): Promise<AdminMembership[]> {
+    return this.request(`/api/admin/businesses/${businessId}/members/${userId}`, { method: 'DELETE' });
+  }
+
+  listAdminAuditLogs(): Promise<AdminAuditEntry[]> {
+    return this.request('/api/admin/audit-logs?limit=200');
+  }
+
+  listAdminTaxRules(): Promise<AdminTaxRule[]> {
+    return this.request('/api/admin/tax-rules');
+  }
+
+  createAdminTaxRule(payload: AdminTaxRuleInput): Promise<AdminTaxRule> {
+    return this.request('/api/admin/tax-rules', { method: 'POST', body: payload });
+  }
+
+  updateAdminTaxRule(ruleId: string, payload: AdminTaxRuleInput): Promise<AdminTaxRule> {
+    return this.request(`/api/admin/tax-rules/${ruleId}`, { method: 'PUT', body: payload });
   }
 
   private async request<T>(

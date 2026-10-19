@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.EnumSet;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +34,7 @@ class AdminBootstrapServiceTest {
     void createsEnabledAdminWithOnlyAdminRoleAndHashedGeneratedPassword() {
         when(userRepository.existsByRolesContainingOrRolesContaining(Role.ADMIN, Role.SUPER_ADMIN))
                 .thenReturn(false);
-        when(userRepository.findByEmailIgnoreCase(any(String.class))).thenReturn(Optional.empty());
+        when(userRepository.findByEmailIgnoreCase("admin@taxpilot.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode(any(String.class))).thenReturn("$2a$hashed");
 
         var credentials = service.createIfMissing().orElseThrow();
@@ -45,8 +44,8 @@ class AdminBootstrapServiceTest {
         User created = userCaptor.getValue();
         assertEquals("System", created.getFirstName());
         assertEquals("Administrator", created.getLastName());
+        assertEquals("admin@taxpilot.com", credentials.email());
         assertEquals(credentials.email(), created.getEmail());
-        assertTrue(Pattern.matches("system-admin-[0-9a-f]{32}@taxpilot\\.local", credentials.email()));
         assertEquals("Not provided", created.getPhone());
         assertTrue(credentials.password().length() >= 40);
         assertEquals("$2a$hashed", created.getPasswordHash());
@@ -67,16 +66,14 @@ class AdminBootstrapServiceTest {
     }
 
     @Test
-    void regeneratesEmailIfGeneratedAddressAlreadyBelongsToAnAccount() {
+    void refusesToPromoteAnExistingNonAdminAtTheStandardAdminEmail() {
         when(userRepository.existsByRolesContainingOrRolesContaining(Role.ADMIN, Role.SUPER_ADMIN))
                 .thenReturn(false);
-        when(userRepository.findByEmailIgnoreCase(any(String.class)))
-                .thenReturn(Optional.of(User.builder().build()), Optional.empty());
-        when(passwordEncoder.encode(any(String.class))).thenReturn("$2a$hashed");
+        when(userRepository.findByEmailIgnoreCase("admin@taxpilot.com"))
+                .thenReturn(Optional.of(User.builder().email("admin@taxpilot.com").build()));
 
-        var credentials = service.createIfMissing().orElseThrow();
-
-        assertTrue(Pattern.matches("system-admin-[0-9a-f]{32}@taxpilot\\.local", credentials.email()));
-        verify(userRepository).saveAndFlush(any(User.class));
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, service::createIfMissing);
+        verify(userRepository, never()).saveAndFlush(any(User.class));
+        verify(passwordEncoder, never()).encode(any(String.class));
     }
 }

@@ -12,11 +12,12 @@ import {
   TaxProfile
 } from './taxpilot-api.service';
 import { TaxToolsComponent } from './tax-tools.component';
+import { AdminDashboardComponent } from './admin-dashboard.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [TaxToolsComponent],
+  imports: [TaxToolsComponent, AdminDashboardComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
@@ -25,6 +26,7 @@ export class AppComponent {
   isLogin = true;
   showPassword = false;
   showConfirmPassword = false;
+  isAdmin = false;
   activePage: 'overview' | 'obligations' | 'profile' | 'deadline' | 'tools' | 'team' = 'overview';
   addingBusiness = false;
   busy = false;
@@ -46,7 +48,10 @@ export class AppComponent {
       const user = this.api.getStoredUser();
       this.userName = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim();
       this.userEmail = user?.email ?? '';
-      void this.loadBusinesses();
+      this.isAdmin = user?.roles?.some((role) => role === 'ADMIN' || role === 'SUPER_ADMIN') ?? false;
+      if (!this.isAdmin) {
+        void this.loadBusinesses();
+      }
     }
   }
 
@@ -189,7 +194,10 @@ export class AppComponent {
       this.api.saveSession(result);
       this.userName = `${result.firstName} ${result.lastName}`.trim();
       this.userEmail = result.email;
-      await this.loadBusinesses();
+      this.isAdmin = result.roles?.some((role) => role === 'ADMIN' || role === 'SUPER_ADMIN') ?? false;
+      if (!this.isAdmin) {
+        await this.loadBusinesses();
+      }
     } catch (error) {
       this.errorMessage = this.errorText(error);
     } finally {
@@ -378,6 +386,7 @@ export class AppComponent {
     const refreshToken = this.api.getStoredUser()?.refreshToken ?? null;
     void this.api.logout(refreshToken).catch(() => undefined);
     this.api.clearSession();
+    this.isAdmin = false;
     this.activePage = 'overview';
     this.businesses = [];
     this.teamMembers = [];

@@ -1,0 +1,248 @@
+<div class="admin-shell">
+  <aside class="admin-sidebar">
+    <a class="admin-brand" href="#admin" aria-label="TaxPilot admin">
+      <span class="brand-mark">T</span><span>TaxPilot</span>
+    </a>
+    <div class="admin-label">PLATFORM CONTROL</div>
+    <nav aria-label="Administrator navigation">
+      <button [class.active]="section === 'overview'" (click)="setSection('overview')"><span>▦</span> Overview</button>
+      <button [class.active]="section === 'users'" (click)="setSection('users')"><span>◎</span> Users</button>
+      <button [class.active]="section === 'businesses'" (click)="setSection('businesses')"><span>⌂</span> Businesses</button>
+      <button [class.active]="section === 'rules'" (click)="setSection('rules')"><span>◈</span> Tax rules</button>
+      <button [class.active]="section === 'audit'" (click)="setSection('audit')"><span>≡</span> Audit trail</button>
+    </nav>
+    <div class="admin-side-note">
+      <span class="secure-dot"></span>
+      <span><strong>Administrator access</strong><small>Actions are restricted and audited</small></span>
+    </div>
+    <div class="admin-account">
+      <div class="account-avatar">A</div>
+      <div><strong>System administrator</strong><small>Platform operations</small></div>
+      <button type="button" aria-label="Sign out" title="Sign out" (click)="requestSignOut()">↗</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <header class="admin-header">
+      <div>
+        <p class="admin-kicker">TAXPILOT / ADMINISTRATION</p>
+        <h1>{{ section === 'overview' ? 'Platform overview' :
+          section === 'users' ? 'User management' :
+          section === 'businesses' ? 'Business management' :
+          section === 'rules' ? 'Tax rule management' : 'Audit trail' }}</h1>
+      </div>
+      <div class="header-actions">
+        <span class="admin-role-pill"><span></span> ADMINISTRATOR</span>
+        <button class="refresh-btn" type="button" (click)="loadAdminData()" [disabled]="loading">↻ <span>Refresh</span></button>
+      </div>
+    </header>
+
+    @if (errorMessage) { <div class="admin-alert error" role="alert">{{ errorMessage }}</div> }
+    @if (successMessage) { <div class="admin-alert success" role="status">{{ successMessage }}</div> }
+    @if (loading) {
+      <div class="admin-loading" role="status"><span></span> Loading protected platform data…</div>
+    } @else {
+      @if (section === 'overview') {
+        <section class="welcome">
+          <div>
+            <p class="admin-kicker">SYSTEM SNAPSHOT</p>
+            <h2>Good to see you, Admin.</h2>
+            <p>Manage TaxPilot accounts, business workspaces, tax schedules, and platform activity from one secure console.</p>
+          </div>
+          <div class="welcome-art" aria-hidden="true"><span>⌘</span><i></i><b></b></div>
+        </section>
+
+        <section class="stat-grid" aria-label="Platform statistics">
+          <article class="stat-card"><span class="stat-icon teal">◎</span><small>REGISTERED USERS</small><strong>{{ overview?.users ?? 0 }}</strong><span>{{ overview?.enabledUsers ?? 0 }} enabled accounts</span></article>
+          <article class="stat-card"><span class="stat-icon gold">⌂</span><small>BUSINESSES</small><strong>{{ overview?.businesses ?? 0 }}</strong><span>Platform workspaces</span></article>
+          <article class="stat-card"><span class="stat-icon blue">▤</span><small>FILING PERIODS</small><strong>{{ overview?.filingPeriods ?? 0 }}</strong><span>Records across businesses</span></article>
+          <article class="stat-card"><span class="stat-icon violet">♙</span><small>ADMINISTRATORS</small><strong>{{ overview?.admins ?? 0 }}</strong><span>Privileged accounts</span></article>
+        </section>
+
+        <section class="admin-panel overview-panel">
+          <div class="panel-heading">
+            <div><p class="admin-kicker">QUICK ACCESS</p><h2>Platform operations</h2></div>
+            <span class="live-indicator"><i></i> Connected</span>
+          </div>
+          <div class="operation-grid">
+            <button type="button" (click)="setSection('users')"><span class="operation-icon teal">◎</span><strong>Manage users</strong><small>Review account status and access</small><b>→</b></button>
+            <button type="button" (click)="setSection('businesses')"><span class="operation-icon gold">⌂</span><strong>Manage businesses</strong><small>Review workspaces and memberships</small><b>→</b></button>
+            <button type="button" (click)="setSection('rules')"><span class="operation-icon blue">◈</span><strong>Tax schedules</strong><small>Maintain versioned tax rules</small><b>→</b></button>
+            <button type="button" (click)="setSection('audit')"><span class="operation-icon violet">≡</span><strong>Audit activity</strong><small>Inspect platform-wide events</small><b>→</b></button>
+          </div>
+        </section>
+
+        <section class="admin-panel">
+          <div class="panel-heading"><div><p class="admin-kicker">LATEST EVENTS</p><h2>Recent audit activity</h2></div><button class="link-btn" type="button" (click)="setSection('audit')">View all →</button></div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>ACTIVITY</th><th>ACTOR</th><th>RESOURCE</th><th>TIME</th><th>RESULT</th></tr></thead>
+              <tbody>
+                @for (entry of auditLogs.slice(0, 6); track entry.id) {
+                  <tr><td><strong>{{ entry.action.replaceAll('_', ' ') }}</strong><small>{{ entry.details || '—' }}</small></td><td>{{ entry.actorEmail || 'System' }}</td><td>{{ entry.resourceType }}<small>{{ entry.resourceId || '' }}</small></td><td>{{ entry.occurredAt | date:'medium' }}</td><td><span class="tag" [class.tag-good]="entry.outcome === 'SUCCESS'">{{ entry.outcome }}</span></td></tr>
+                } @empty { <tr><td colspan="5" class="empty-row">No audit events are available yet.</td></tr> }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+
+      @if (section === 'users') {
+        <section class="admin-panel">
+          <div class="panel-heading">
+            <div><p class="admin-kicker">ACCOUNT DIRECTORY</p><h2>{{ users.length }} user accounts</h2><p class="panel-subtitle">Disable access or permanently remove an account. The final administrator is protected.</p></div>
+            <label class="search-box"><span>⌕</span><input [value]="searchText" (input)="searchText = $any($event.target).value" placeholder="Search users" aria-label="Search users"></label>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>USER</th><th>ROLES</th><th>BUSINESSES</th><th>STATUS</th><th class="align-right">ACTIONS</th></tr></thead>
+              <tbody>
+                @for (user of filteredUsers; track user.id) {
+                  <tr>
+                    <td><strong>{{ user.firstName }} {{ user.lastName }}</strong><small>{{ user.email }}</small></td>
+                    <td><div class="tag-list">@for (role of user.roles; track role) { <span class="tag">{{ role.replaceAll('_', ' ') }}</span> }</div></td>
+                    <td>{{ user.businessCount }}</td>
+                    <td><span class="status-pill" [class.enabled]="user.enabled">{{ user.enabled ? 'Enabled' : 'Disabled' }}</span></td>
+                    <td class="align-right action-cell">
+                      <button class="small-btn" type="button" [disabled]="busy" (click)="setUserEnabled(user)">{{ user.enabled ? 'Disable' : 'Enable' }}</button>
+                      <button class="small-btn danger" type="button" [disabled]="busy" (click)="deleteUser(user)">Delete</button>
+                    </td>
+                  </tr>
+                } @empty { <tr><td colspan="5" class="empty-row">No users match this search.</td></tr> }
+              </tbody>
+            </table>
+          </div>
+          <p class="admin-footnote">Deleting a user permanently removes their account and business memberships. This cannot be undone.</p>
+        </section>
+      }
+
+      @if (section === 'businesses') {
+        <section class="admin-panel">
+          <div class="panel-heading">
+            <div><p class="admin-kicker">BUSINESS DIRECTORY</p><h2>{{ businesses.length }} business workspaces</h2></div>
+            <label class="search-box"><span>⌕</span><input [value]="searchText" (input)="searchText = $any($event.target).value" placeholder="Search businesses" aria-label="Search businesses"></label>
+          </div>
+          <div class="business-admin-grid">
+            <div class="business-list">
+              @for (business of filteredBusinesses; track business.id) {
+                <button type="button" [class.selected]="business.id === selectedBusinessId" (click)="selectBusiness(business.id)">
+                  <span class="business-avatar">{{ business.name.slice(0, 1).toUpperCase() }}</span>
+                  <span><strong>{{ business.name }}</strong><small>{{ business.registrationNumber }}</small></span>
+                  <span class="member-count">{{ business.members.length }} members</span>
+                </button>
+              } @empty { <p class="empty-row">No businesses match this search.</p> }
+            </div>
+
+            @if (selectedBusiness; as business) {
+              <div class="business-detail">
+                <div class="detail-heading">
+                  <div><p class="admin-kicker">WORKSPACE DETAILS</p><h3>{{ business.name }}</h3><small>{{ business.legalName }}</small></div>
+                  <div class="button-row">
+                    <button class="small-btn" type="button" (click)="editingBusinessId = business.id">Edit</button>
+                    <button class="small-btn danger" type="button" [disabled]="busy" (click)="deleteBusiness(business)">Delete</button>
+                  </div>
+                </div>
+
+                @if (editingBusinessId === business.id) {
+                  <form class="admin-form" (submit)="saveBusiness($event)">
+                    <label>Business name<input name="name" [value]="business.name" required></label>
+                    <label>Legal name<input name="legalName" [value]="business.legalName" required></label>
+                    <label>Registration number<input name="registrationNumber" [value]="business.registrationNumber" required></label>
+                    <label>KRA PIN<input name="kraPin" [value]="business.kraPin" required></label>
+                    <label>Industry<input name="industry" [value]="business.industry" required></label>
+                    <label>Business type<select name="businessType" [value]="business.businessType">
+                      <option value="SOLE_PROPRIETOR">Sole proprietor</option><option value="PARTNERSHIP">Partnership</option>
+                      <option value="LIMITED_COMPANY">Limited company</option><option value="LLP">LLP</option><option value="OTHER">Other</option>
+                    </select></label>
+                    <label>Annual turnover<input name="annualTurnover" type="number" min="0" step="0.01" [value]="business.annualTurnover"></label>
+                    <label>Employees<input name="employeeCount" type="number" min="0" [value]="business.employeeCount"></label>
+                    <label class="check-label"><input name="vatRegistered" type="checkbox" [checked]="business.vatRegistered"> VAT registered</label>
+                    <label class="check-label"><input name="etimsRegistered" type="checkbox" [checked]="business.etimsRegistered"> eTIMS registered</label>
+                    <div class="button-row"><button class="primary-btn" type="submit" [disabled]="busy">Save business</button><button class="small-btn" type="button" (click)="editingBusinessId = ''">Cancel</button></div>
+                  </form>
+                } @else {
+                  <dl class="business-facts">
+                    <div><dt>Registration</dt><dd>{{ business.registrationNumber }}</dd></div>
+                    <div><dt>KRA PIN</dt><dd>{{ business.kraPin }}</dd></div>
+                    <div><dt>Business type</dt><dd>{{ business.businessType.replaceAll('_', ' ') }}</dd></div>
+                    <div><dt>Industry</dt><dd>{{ business.industry }}</dd></div>
+                  </dl>
+                }
+
+                <div class="members-heading"><div><h4>Business access</h4><small>Manage user memberships and roles</small></div><span class="tag">{{ business.members.length }} MEMBERS</span></div>
+                <form class="member-form" (submit)="addMember($event)">
+                  <input name="email" type="email" placeholder="Existing user email" required aria-label="Existing user email">
+                  <select name="role" aria-label="Membership role"><option value="ACCOUNTANT">Accountant</option><option value="TAX_ADVISOR">Tax adviser</option><option value="EMPLOYEE">Employee</option><option value="BUSINESS_OWNER">Business owner</option><option value="BUSINESS_ADMIN">Business admin</option></select>
+                  <button class="primary-btn" type="submit" [disabled]="busy">Add member</button>
+                </form>
+                <div class="member-list">
+                  @for (member of business.members; track member.userId) {
+                    <div><span class="member-avatar">{{ member.name.slice(0, 1).toUpperCase() }}</span><span><strong>{{ member.name }}</strong><small>{{ member.email }}</small></span><span class="tag">{{ member.role.replaceAll('_', ' ') }}</span><button class="icon-btn danger" type="button" [disabled]="busy" (click)="removeMember(member)" aria-label="Remove member">×</button></div>
+                  } @empty { <p class="empty-row">No memberships found.</p> }
+                </div>
+              </div>
+            } @else {
+              <div class="business-detail empty-state">Select a business to review its details and access.</div>
+            }
+          </div>
+          <p class="admin-footnote danger-note">Deleting a business permanently removes its memberships, tax profile, filing periods, calculations, deadline statuses and associated documents.</p>
+        </section>
+      }
+
+      @if (section === 'audit') {
+        <section class="admin-panel">
+          <div class="panel-heading"><div><p class="admin-kicker">GOVERNANCE</p><h2>Platform-wide audit trail</h2><p class="panel-subtitle">Latest {{ auditLogs.length }} recorded system events.</p></div></div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>EVENT</th><th>ACTOR</th><th>RESOURCE</th><th>BUSINESS ID</th><th>TIME</th><th>RESULT</th></tr></thead>
+              <tbody>
+                @for (entry of auditLogs; track entry.id) {
+                  <tr><td><strong>{{ entry.action.replaceAll('_', ' ') }}</strong><small>{{ entry.details || '—' }}</small></td><td>{{ entry.actorEmail || 'System' }}</td><td>{{ entry.resourceType }}<small>{{ entry.resourceId || '' }}</small></td><td class="mono">{{ entry.businessId || '—' }}</td><td>{{ entry.occurredAt | date:'medium' }}</td><td><span class="tag" [class.tag-good]="entry.outcome === 'SUCCESS'">{{ entry.outcome }}</span></td></tr>
+                } @empty { <tr><td colspan="6" class="empty-row">No audit events are available yet.</td></tr> }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+
+      @if (section === 'rules') {
+        <section class="admin-panel">
+          <div class="panel-heading">
+            <div><p class="admin-kicker">VERSIONED TAX SCHEDULE</p><h2>Tax rule versions</h2><p class="panel-subtitle">Rule edits affect future calculations using the matching version. Existing calculation records remain unchanged.</p></div>
+            <button class="primary-btn" type="button" (click)="startNewRule()">+ New version</button>
+          </div>
+
+          @if (editingRuleId) {
+            <form class="rule-form" (submit)="saveRule($event)">
+              <h3>{{ editingRuleId === 'new' ? 'Create tax rule version' : 'Edit tax rule version' }}</h3>
+              <div class="admin-form rule-fields">
+                <label>Rule code<input name="ruleCode" [value]="editingRule?.ruleCode ?? ''" [readOnly]="editingRuleId !== 'new'" required></label>
+                <label>Version<input name="ruleVersion" [value]="editingRule?.ruleVersion ?? ''" [readOnly]="editingRuleId !== 'new'" required></label>
+                <label>Frequency<input name="frequency" [value]="editingRule?.frequency ?? 'MONTHLY'" required></label>
+                <label>Due day<input name="dueDay" type="number" min="1" max="31" [value]="editingRule?.dueDay ?? ''"></label>
+                <label>Effective from<input name="effectiveFrom" type="date" [value]="editingRule?.effectiveFrom ?? ''" required></label>
+                <label>Effective to<input name="effectiveTo" type="date" [value]="editingRule?.effectiveTo ?? ''"></label>
+                <label>Flat rate<input name="rate" type="number" min="0" max="1" step="0.000001" [value]="editingRule?.rate ?? ''"></label>
+                <label>Threshold (KES)<input name="threshold" type="number" min="0" step="0.01" [value]="editingRule?.threshold ?? ''"></label>
+                <label class="wide">Source<input name="source" [value]="editingRule?.source ?? ''" required></label>
+                <label class="wide">Bands JSON<textarea name="bands" rows="7" [value]="editingRuleBandsJson" spellcheck="false"></textarea><small>Rates are decimals from 0 to 1. Use null for an open-ended upper bound.</small></label>
+              </div>
+              <div class="button-row"><button class="primary-btn" type="submit" [disabled]="busy">{{ busy ? 'Saving…' : 'Save rule version' }}</button><button class="small-btn" type="button" (click)="cancelRuleEdit()">Cancel</button></div>
+            </form>
+          }
+
+          <div class="rule-list">
+            @for (rule of taxRules; track rule.id) {
+              <article class="rule-card">
+                <div class="rule-main"><span class="rule-icon">◈</span><div><strong>{{ rule.ruleCode }} <span>{{ rule.ruleVersion }}</span></strong><small>{{ rule.frequency.replaceAll('_', ' ') }} · Effective {{ rule.effectiveFrom }}{{ rule.effectiveTo ? ' to ' + rule.effectiveTo : ' onward' }}</small></div></div>
+                <div class="rule-meta"><span>{{ rule.bands.length }} bands</span><span>{{ rule.source }}</span></div>
+                <button class="small-btn" type="button" (click)="editRule(rule)">Edit</button>
+              </article>
+            } @empty { <p class="empty-row">No tax rules are configured.</p> }
+          </div>
+          <p class="admin-footnote danger-note">Tax rules affect tax calculations. Confirm legal sources and effective dates before saving. Rule code/version cannot be changed in-place; create a new version instead.</p>
+        </section>
+      }
+    }
+  </main>
+</div>
