@@ -92,6 +92,43 @@ class AdminPasswordResetServiceTest {
     }
 
     @Test
+    void changesExistingAdminPasswordAfterVerifyingCurrentPassword() {
+        User admin = User.builder()
+                .email("admin@taxpilot.com")
+                .roles(Set.of(Role.ADMIN))
+                .passwordHash("old-hash")
+                .build();
+        when(jdbcTemplate.update(RESET_SQL, REQUEST_ID)).thenReturn(1);
+        when(userRepository.findByEmailIgnoreCase("admin@taxpilot.com")).thenReturn(Optional.of(admin));
+        when(passwordEncoder.matches("current-password", "old-hash")).thenReturn(true);
+        when(passwordEncoder.encode("new-password")).thenReturn("new-hash");
+
+        assertTrue(service.changePasswordOnce(REQUEST_ID, "current-password", "new-password"));
+
+        assertEquals("new-hash", admin.getPasswordHash());
+        verify(userRepository).saveAndFlush(admin);
+    }
+
+    @Test
+    void refusesPasswordChangeWhenCurrentPasswordDoesNotMatch() {
+        User admin = User.builder()
+                .email("admin@taxpilot.com")
+                .roles(Set.of(Role.ADMIN))
+                .passwordHash("old-hash")
+                .build();
+        when(jdbcTemplate.update(RESET_SQL, REQUEST_ID)).thenReturn(1);
+        when(userRepository.findByEmailIgnoreCase("admin@taxpilot.com")).thenReturn(Optional.of(admin));
+        when(passwordEncoder.matches("wrong-password", "old-hash")).thenReturn(false);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.changePasswordOnce(REQUEST_ID, "wrong-password", "new-password"));
+
+        assertEquals("old-hash", admin.getPasswordHash());
+        verify(userRepository, never()).saveAndFlush(any(User.class));
+        verify(passwordEncoder, never()).encode(anyString());
+    }
+
+    @Test
     void refusesToResetWhenTargetEmailIsNotAnAdmin() {
         User regularUser = User.builder()
                 .email("admin@taxpilot.com")

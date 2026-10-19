@@ -38,10 +38,7 @@ public class AdminPasswordResetService {
 
     @Transactional
     public Optional<ResetCredentials> resetOnce(UUID requestId) {
-        int claimed = jdbcTemplate.update(
-                "INSERT INTO admin_password_reset_requests (request_id) VALUES (?) ON CONFLICT DO NOTHING",
-                requestId);
-        if (claimed == 0) {
+        if (!claimRequest(requestId)) {
             return Optional.empty();
         }
 
@@ -52,6 +49,31 @@ public class AdminPasswordResetService {
         admin.setPasswordHash(passwordEncoder.encode(password));
         userRepository.saveAndFlush(admin);
         return Optional.of(new ResetCredentials(ADMIN_EMAIL, password));
+    }
+
+    @Transactional
+    public boolean changePasswordOnce(UUID requestId, String currentPassword, String newPassword) {
+        if (!claimRequest(requestId)) {
+            return false;
+        }
+
+        User admin = userRepository.findByEmailIgnoreCase(ADMIN_EMAIL)
+                .filter(this::isAdmin)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Cannot change admin password: no admin@taxpilot.com administrator was found."));
+        if (!passwordEncoder.matches(currentPassword, admin.getPasswordHash())) {
+            throw new IllegalArgumentException("Current admin password did not match; no change was made.");
+        }
+
+        admin.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.saveAndFlush(admin);
+        return true;
+    }
+
+    private boolean claimRequest(UUID requestId) {
+        return jdbcTemplate.update(
+                "INSERT INTO admin_password_reset_requests (request_id) VALUES (?) ON CONFLICT DO NOTHING",
+                requestId) == 1;
     }
 
     private User findAdminToReset() {

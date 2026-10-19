@@ -1,5 +1,6 @@
 package com.taxpilot.config;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -22,14 +23,20 @@ public class AdminPasswordResetRunner implements ApplicationRunner {
 
     private final boolean enabled;
     private final String requestId;
+    private final String currentPassword;
+    private final String newPassword;
     private final AdminPasswordResetService resetService;
 
     public AdminPasswordResetRunner(
             @Value("${app.admin-password-reset.enabled:false}") boolean enabled,
             @Value("${app.admin-password-reset.request-id:}") String requestId,
+            @Value("${app.admin-password-reset.current-password:}") String currentPassword,
+            @Value("${app.admin-password-reset.new-password:}") String newPassword,
             AdminPasswordResetService resetService) {
         this.enabled = enabled;
         this.requestId = requestId;
+        this.currentPassword = currentPassword;
+        this.newPassword = newPassword;
         this.resetService = resetService;
     }
 
@@ -48,9 +55,34 @@ public class AdminPasswordResetRunner implements ApplicationRunner {
                     exception);
         }
 
-        resetService.resetOnce(parsedRequestId).ifPresentOrElse(
-                this::logCredentials,
-                () -> LOGGER.info("Admin password reset request was already applied; no changes were made"));
+        if (currentPassword.isBlank() && newPassword.isBlank()) {
+            resetService.resetOnce(parsedRequestId).ifPresentOrElse(
+                    this::logCredentials,
+                    () -> LOGGER.info("Admin password reset request was already applied; no changes were made"));
+            return;
+        }
+
+        validatePasswordChangeConfiguration();
+        if (resetService.changePasswordOnce(parsedRequestId, currentPassword, newPassword)) {
+            LOGGER.info("Admin password changed successfully; the configured request was applied once");
+        } else {
+            LOGGER.info("Admin password change request was already applied; no changes were made");
+        }
+    }
+
+    private void validatePasswordChangeConfiguration() {
+        if (currentPassword.isBlank() || newPassword.isBlank()) {
+            throw new IllegalStateException(
+                    "ADMIN_PASSWORD_RESET_CURRENT_PASSWORD and ADMIN_PASSWORD_RESET_NEW_PASSWORD "
+                            + "must both be provided for a password change.");
+        }
+        if (newPassword.length() < 12) {
+            throw new IllegalStateException("ADMIN_PASSWORD_RESET_NEW_PASSWORD must contain at least 12 characters.");
+        }
+        if (newPassword.getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new IllegalStateException(
+                    "ADMIN_PASSWORD_RESET_NEW_PASSWORD must be no more than 72 UTF-8 bytes.");
+        }
     }
 
     private void logCredentials(ResetCredentials credentials) {
